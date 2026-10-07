@@ -108,16 +108,23 @@ function ns.Kind(questID)
 	return tag and KINDS[tag.tagID]
 end
 
+-- Hard: the quests the game's tracker shows in red, by the same call.
+function ns.Hard(questID)
+	return C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID) == Enum.RelativeContentDifficulty.Impossible
+end
+
 -- A quest's icon: ready for turn-in, the map-pin "?"; a dungeon or raid quest
 -- still to do, its entrance icon in colour; any other quest still to do, the
--- "?" in grey. The old gossip icon if a client lacks the art. The entrance
--- art is mostly glow, so it is drawn larger than the "?", by entranceScale.
+-- "?" in grey, or in the tracker's red when hard and the caller asks for it.
+-- The old gossip icon if a client lacks the art. The entrance art is mostly
+-- glow, so it is drawn larger than the "?", by entranceScale.
 local ATLAS = { dungeon = "Dungeon", raid = "Raid" }
 
-function ns.SetQuestIcon(texture, complete, kind, size, entranceScale)
+function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, hard)
 	kind = not complete and kind or nil
-	if texture.questComplete ~= complete or texture.questKind ~= kind then
-		texture.questComplete, texture.questKind = complete, kind
+	hard = not complete and not kind and hard or false
+	if texture.questComplete ~= complete or texture.questKind ~= kind or texture.questHard ~= hard then
+		texture.questComplete, texture.questKind, texture.questHard = complete, kind, hard
 		texture.entrance = kind ~= nil and texture:SetAtlas(ATLAS[kind])
 		if texture.entrance then
 			texture:SetDesaturated(false)
@@ -126,6 +133,13 @@ function ns.SetQuestIcon(texture, complete, kind, size, entranceScale)
 				texture:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon")
 			end
 			texture:SetDesaturated(not complete)
+		end
+		-- The grey "?" tinted takes the tint's colour cleanly.
+		local red = hard and QuestDifficultyColors.impossible
+		if red then
+			texture:SetVertexColor(red.r, red.g, red.b)
+		else
+			texture:SetVertexColor(1, 1, 1)
 		end
 	end
 	size = size * (texture.entrance and entranceScale or 1)
@@ -260,6 +274,7 @@ function ns.Refresh()
 			local target = { questID = questID }
 			target.title, target.complete, target.detail = ns.Describe(questID)
 			target.kind = ns.Kind(questID)
+			target.hard = ns.Hard(questID)
 			if useQuestie then
 				SpawnLocation(target, north, west, here)
 			end
