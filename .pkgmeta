@@ -9,4 +9,5 @@ externals:
 ignore:
   - art
   - curseforge
+  - screenshots
   - README.md

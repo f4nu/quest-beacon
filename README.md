@@ -13,6 +13,20 @@ Locations are the game's own quest areas. With [QuestieDB](https://github.com/Qu
 
 The game places only one point in the 3D world for addons, so only one quest at a time gets a world marker. The compass covers the rest.
 
+## Screenshots
+
+The compass: grouped quests with their count, dungeon quests with the dungeon icon.
+
+![Compass](screenshots/compass_1.jpg)
+
+The world marker on the nearest quest, with its next objective and distance.
+
+![World marker](screenshots/compass_2.jpg)
+
+The settings page.
+
+![Settings](screenshots/compass_3.jpg)
+
 ## Settings
 
 Options → AddOns → Quest Beacon, or the minimap button (left-click: settings, right-click: compass on/off). The button works with minimap button collectors such as Leatrix Plus.
