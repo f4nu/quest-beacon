@@ -9,6 +9,10 @@ local ADDON, ns = ...
 
 local DEFAULTS = { compass = true, marker = true, auto = true }
 
+-- A filled circle centred in its texture; the game's portrait mask is not, and
+-- numbers on it looked off centre.
+ns.CIRCLE = "Interface\\AddOns\\" .. ADDON .. "\\Media\\circle"
+
 ns.targets = {}  -- tracked quests in watch order: {questID, title, complete, detail, north, west, instance}
 ns.byQuest = {}
 
