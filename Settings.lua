@@ -8,6 +8,9 @@ local ADDON, ns = ...
 
 local category
 
+-- Where the minimap icon's centre goes, from the button's centre.
+local MINIMAP_ICON_OFFSET_X, MINIMAP_ICON_OFFSET_Y = 1.5, -1
+
 function ns.OpenSettings()
 	if category then
 		Settings.OpenToCategory(category:GetID())
@@ -90,6 +93,15 @@ local function CreateMinimapButton()
 		end,
 	})
 	icon:Register(ADDON, launcher, QuestBeaconDB.minimap)
+
+	-- Outside the retail client LibDBIcon lays a square icon out at (7,-6),
+	-- left of and above the ring's centre; a round icon shows it. Centre ours
+	-- on the ring (measured in game).
+	local button = icon:GetMinimapButton(ADDON)
+	if button and button.icon and WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+		button.icon:ClearAllPoints()
+		button.icon:SetPoint("CENTER", button, "CENTER", MINIMAP_ICON_OFFSET_X, MINIMAP_ICON_OFFSET_Y)
+	end
 end
 
 table.insert(ns.onLoad, function()
