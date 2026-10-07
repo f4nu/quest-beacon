@@ -91,13 +91,21 @@ updater:SetScript("OnUpdate", function(_, dt)
 		return Off()
 	end
 
+	-- A quest in another instance: the game still navigates to it, but draws the
+	-- point in this instance's space, where it means nothing. Show neither marker.
+	local target = ns.byQuest[questID]
+	if target and target.instance and target.instance ~= ns.Instance() then
+		marker:Hide()
+		SetGameMarkerHidden(true)
+		return
+	end
+
 	if anchoredTo ~= nav then
 		marker:ClearAllPoints()
 		marker:SetPoint("CENTER", nav, "CENTER")
 		anchoredTo = nav
 	end
 
-	local target = ns.byQuest[questID]
 	local questTitle, complete, objective
 	if target then
 		questTitle, complete, objective = target.title, target.complete, target.detail

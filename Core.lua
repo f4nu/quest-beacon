@@ -27,6 +27,11 @@ local function ToWorld(mapID, x, y)
 	end
 end
 
+-- The instance the player is in; known even where the position is hidden.
+function ns.Instance()
+	return (select(8, GetInstanceInfo()))
+end
+
 -- The player in world yards: north, west, instance. Nil where the game hides it (instances).
 function ns.PlayerPosition()
 	local north, west, _, instance = UnitPosition("player")
@@ -90,6 +95,7 @@ function ns.Refresh()
 		end
 	end
 
+	local here = ns.Instance()
 	wipe(ns.targets)
 	wipe(ns.byQuest)
 	for i = 1, C_QuestLog.GetNumQuestWatches() do
@@ -98,14 +104,19 @@ function ns.Refresh()
 			local target = { questID = questID }
 			target.title, target.complete, target.detail = ns.Describe(questID)
 			local spot = onMap[questID]
-			local mapID, x, y
 			if spot then
-				mapID, x, y = spot[1], spot[2], spot[3]
-			else
-				mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+				target.north, target.west, target.instance = ToWorld(spot[1], spot[2], spot[3])
 			end
-			if mapID and x and y then
-				target.north, target.west, target.instance = ToWorld(mapID, x, y)
+			-- No spot, or one in another instance (you are in the Deeprun Tram, it is
+			-- outside): the game's next waypoint, which may be the way out.
+			if target.instance ~= here then
+				local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+				if mapID and x and y then
+					local north, west, instance = ToWorld(mapID, x, y)
+					if instance == here or not target.instance then
+						target.north, target.west, target.instance = north, west, instance
+					end
+				end
 			end
 			ns.targets[#ns.targets + 1] = target
 			ns.byQuest[questID] = target
