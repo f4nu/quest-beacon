@@ -174,7 +174,12 @@ local function Draw(dt)
 		return
 	end
 	-- Ease towards the wanted alpha rather than blink.
-	local want = CameraSwinging() and CAMERA_ALPHA or 1
+	local want = 1
+	if ns.Settings().taxiFade and UnitOnTaxi("player") then
+		want = 0   -- on a flight path: nothing to steer
+	elseif CameraSwinging() then
+		want = CAMERA_ALPHA
+	end
 	alpha = alpha + (want - alpha) * math.min(1, dt * 12)
 	bar:SetAlpha(alpha)
 	local merge = ns.Settings().merge

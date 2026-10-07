@@ -15,6 +15,7 @@ local DEFAULTS = {
 	auto = true,
 	questie = true,
 	cameraFade = true,
+	taxiFade = true,
 	compassWidth = 560,
 	merge = 26,
 }

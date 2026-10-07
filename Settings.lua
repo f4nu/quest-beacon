@@ -47,6 +47,8 @@ local function CreateSettings()
 		.. (ns.Questie.Available() and "QuestieDB is installed." or "Needs the QuestieDB addon, which is not installed."))
 	Checkbox("cameraFade", "Fade the compass while turning the camera",
 		"The compass follows your character. While you swing the camera with the left mouse button it no longer matches the view, so it fades.")
+	Checkbox("taxiFade", "Hide the compass on flight paths",
+		"The compass fades out while you fly a flight path, and comes back when you land.")
 	Slider("compassWidth", "Compass width", "Width of the compass bar.", 300, 1200, 20)
 	Slider("merge", "Group quests closer than",
 		"Quests closer than this on the compass share one pin, with a count.", 10, 60, 2)
