@@ -57,7 +57,10 @@ for _, spec in ipairs(CARDINALS) do
 	cardinals[#cardinals + 1] = label
 end
 
-local MERGE = 26   -- px: quests closer than this on the bar share one pin
+local MERGE = 26       -- px: quests closer than this on the bar share one pin
+local LABEL_TOP = 14   -- px from the bar's middle line down to the first row of distances
+local LABEL_ROW = 11   -- px between the two rows
+local LABEL_GAP = 4    -- px kept clear between labels on one row
 local pins = {}
 local tips = {}
 
@@ -107,19 +110,21 @@ local function Pin(i)
 	pin = CreateFrame("Button", nil, bar)
 	pin.icon = pin:CreateTexture(nil, "ARTWORK")
 	pin.icon:SetAllPoints()
+	-- Badge and distance hang off the pin's centre, which sits on the bar's
+	-- middle line: they stay at one height whatever size the icon is.
 	pin.distance = pin:CreateFontString(nil, "OVERLAY")
 	pin.distance:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
-	pin.distance:SetPoint("TOP", pin, "BOTTOM", 0, -2)
 	pin.badge = pin:CreateTexture(nil, "ARTWORK", nil, 1)
 	pin.badge:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
 	pin.badge:SetVertexColor(0, 0, 0, 0.85)
 	pin.badge:SetSize(14, 14)
-	pin.badge:SetPoint("CENTER", pin, "BOTTOMRIGHT", -1, 3)
-	-- The number fills the badge and is centred in it both ways; a free-floating
-	-- string sits off centre by its own rounding.
+	pin.badge:SetPoint("CENTER", pin, "CENTER", 11, -9)
+	-- The number fills the badge, centred both ways, raised 1px: digits sit
+	-- above the font's descender space and looked low.
 	pin.count = pin:CreateFontString(nil, "OVERLAY")
 	pin.count:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
-	pin.count:SetAllPoints(pin.badge)
+	pin.count:SetPoint("TOPLEFT", pin.badge, "TOPLEFT", 0, 1)
+	pin.count:SetPoint("BOTTOMRIGHT", pin.badge, "BOTTOMRIGHT", 0, 1)
 	pin.count:SetJustifyH("CENTER")
 	pin.count:SetJustifyV("MIDDLE")
 	pin:SetScript("OnClick", function(self)
@@ -196,14 +201,31 @@ local function Draw()
 		pin.count:SetText(#members)
 		local badge = #members >= 10 and 17 or 14
 		pin.badge:SetSize(badge, badge)
-		local near, far = ns.Yards(members[1].yards), ns.Yards(members[#members].yards)
-		pin.distance:SetText(not within and "" or (many and near ~= far) and (near .. "-" .. far) or near)
+		pin.distance:SetText(within and ns.Yards(members[1].yards) or "")
 		pin.distance:SetTextColor(current and 1 or 0.8, current and 0.82 or 0.8, current and 0 or 0.8)
+		pin.x = x
 		pin:SetPoint("CENTER", bar, "CENTER", x, 0)
 		pin:Show()
 	end
 	for i = #groups + 1, #pins do
 		pins[i]:Hide()
+	end
+
+	-- Labels left to right: one that would touch its left neighbour takes the
+	-- other row, so colliding labels alternate upper, lower, upper.
+	local previousRight, previousRow
+	for i = 1, #groups do
+		local pin = pins[i]
+		local width = pin.distance:GetStringWidth() or 0
+		local row = 0
+		if width > 0 then
+			if previousRight and pin.x - width / 2 < previousRight + LABEL_GAP then
+				row = 1 - previousRow
+			end
+			previousRight, previousRow = pin.x + width / 2, row
+		end
+		pin.distance:ClearAllPoints()
+		pin.distance:SetPoint("TOP", pin, "CENTER", 0, -(LABEL_TOP + row * LABEL_ROW))
 	end
 end
 
