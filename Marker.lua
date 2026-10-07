@@ -8,7 +8,10 @@ local _, ns = ...
 
 local marker = CreateFrame("Frame", "QuestBeaconMarker", UIParent)
 marker:SetSize(28, 28)
-marker:SetFrameStrata("LOW")
+-- Under the rest of the interface: a target behind the minimap or a portrait
+-- is covered by it, not drawn over it.
+marker:SetFrameStrata("BACKGROUND")
+marker:SetFrameLevel(0)
 marker:SetClampedToScreen(true)
 marker:EnableMouse(false)
 marker:Hide()
