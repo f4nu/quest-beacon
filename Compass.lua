@@ -209,7 +209,9 @@ local function Draw()
 		pin.distance:SetAlpha(math.max(fade, 0))
 		pin.distance:SetTextColor(current and 1 or 0.8, current and 0.82 or 0.8, current and 0 or 0.8)
 		pin.x = x
-		pin:SetPoint("CENTER", bar, "CENTER", x, 0)
+		-- Whole pixels only: text snaps to the pixel grid while textures glide
+		-- between pixels, and the count jittered inside its badge.
+		PixelUtil.SetPoint(pin, "CENTER", bar, "CENTER", x, 0)
 		pin:Show()
 	end
 	for i = #groups + 1, #pins do
