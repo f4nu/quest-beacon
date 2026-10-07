@@ -127,7 +127,7 @@ updater:SetScript("OnUpdate", function(_, dt)
 	detail:SetShown(not clamped)
 
 	local yards = C_Navigation.GetDistance()
-	distance:SetText(yards and yards > 0 and ("%d yd"):format(math.floor(yards)) or "")
+	distance:SetText(yards and yards > 0 and (ns.Yards(yards) .. " yd") or "")
 	-- Fade out on arrival rather than sit on top of the target.
 	marker:SetAlpha(yards and yards < 15 and math.max(0.25, yards / 15) or 1)
 

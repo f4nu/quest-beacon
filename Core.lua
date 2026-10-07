@@ -51,6 +51,16 @@ function ns.Measure(target, north, west)
 	return math.sqrt(dNorth * dNorth + dWest * dWest), math.atan2(dWest, dNorth)
 end
 
+-- Short distance for labels: 673, 1.2k, 3k, 12k.
+function ns.Yards(yards)
+	if yards < 1000 then
+		return tostring(math.floor(yards))
+	elseif yards < 10000 then
+		return (("%.1f"):format(yards / 1000):gsub("%.0$", "")) .. "k"
+	end
+	return math.floor(yards / 1000) .. "k"
+end
+
 function ns.Describe(questID)
 	local title = C_QuestLog.GetTitleForQuestID(questID) or ("Quest " .. questID)
 	local complete = C_QuestLog.ReadyForTurnIn(questID) or C_QuestLog.IsComplete(questID)
