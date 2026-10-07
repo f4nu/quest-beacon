@@ -151,11 +151,18 @@ end
 local entries, groups = {}, {}
 local alpha = 1
 
--- Left button held in mouse-look: the camera turns, your character does not.
--- (With the right button, or both, the character turns too.)
+-- Left button held over the world: the camera turns, your character does not.
+-- (With the right button, or both, the character turns too.) IsMouselooking()
+-- did not report a left-button camera drag in game, so the buttons and what
+-- the mouse is over tell instead.
+local function OverWorld()
+	local focus = GetMouseFoci()[1]
+	return focus == nil or focus == WorldFrame
+end
+
 local function CameraSwinging()
-	return ns.Settings().cameraFade and IsMouselooking() and IsMouseButtonDown("LeftButton")
-		and not IsMouseButtonDown("RightButton")
+	return ns.Settings().cameraFade and IsMouseButtonDown("LeftButton") and not IsMouseButtonDown("RightButton")
+		and OverWorld()
 end
 
 local function Draw(dt)
