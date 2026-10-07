@@ -104,6 +104,18 @@ function ns.Refresh()
 			local target = { questID = questID }
 			target.title, target.complete, target.detail = ns.Describe(questID)
 			local spot = onMap[questID]
+			-- Not on your map (or you have none, as in the Deeprun Tram): the quest's own map, where the client says.
+			if not spot and GetQuestUiMapID then
+				local questMap = GetQuestUiMapID(questID)
+				if questMap and questMap > 0 then
+					for _, poi in ipairs(C_QuestLog.GetQuestsOnMap(questMap) or {}) do
+						if poi.questID == questID then
+							spot = { questMap, poi.x, poi.y }
+							break
+						end
+					end
+				end
+			end
 			if spot then
 				target.north, target.west, target.instance = ToWorld(spot[1], spot[2], spot[3])
 				target.source = ("quest area on map %d (%.3f, %.3f)"):format(spot[1], spot[2], spot[3])

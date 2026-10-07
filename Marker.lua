@@ -92,9 +92,17 @@ updater:SetScript("OnUpdate", function(_, dt)
 	end
 
 	-- A quest in another instance: the game still navigates to it, but draws the
-	-- point in this instance's space, where it means nothing. Show neither marker.
+	-- point in this instance's space, where it means nothing (the Deeprun Tram,
+	-- quest in Stormwind: 8.6k yd). Same where the game has no map for where you
+	-- are and the quest's place is unknown. Show neither marker.
 	local target = ns.byQuest[questID]
-	if target and target.instance and target.instance ~= ns.Instance() then
+	local elsewhere
+	if target and target.instance then
+		elsewhere = target.instance ~= ns.Instance()
+	else
+		elsewhere = C_Map.GetBestMapForUnit("player") == nil
+	end
+	if elsewhere then
 		marker:Hide()
 		SetGameMarkerHidden(true)
 		return
