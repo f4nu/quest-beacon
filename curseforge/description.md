@@ -7,6 +7,7 @@ A compass bar with every tracked quest, and a marker in the world on the nearest
 - A bar at the top of the screen with a pin for every tracked quest, at its direction, with the distance.
 - Quests close together share one pin with a count. Hover it to see every quest in it, nearest first.
 - Click a pin to navigate there.
+- Right-click a pin to drop that quest and go to the nearest other one. It stays out of nearest-first until you pick it again.
 - It turns with your character, and fades while you swing the camera with the left mouse button.
 
 ## World marker

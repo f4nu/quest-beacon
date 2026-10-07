@@ -4,7 +4,7 @@
 
 WoW: Forever addon.
 
-- **Compass bar** at the top of the screen with a pin for every tracked quest, at its direction, with the distance. Quests close together share one pin with a count; hover it for every quest, nearest first. Click a pin to navigate there. It turns with your character, and fades while you swing the camera with the left mouse button.
+- **Compass bar** at the top of the screen with a pin for every tracked quest, at its direction, with the distance. Quests close together share one pin with a count; hover it for every quest, nearest first. Click a pin to navigate there; right-click it to drop that quest and go to the nearest other one. It turns with your character, and fades while you swing the camera with the left mouse button.
 - **World marker** on the quest being navigated to: quest, next objective, distance. It replaces the game's own diamond, and sits under the rest of the interface.
 - **Nearest first**: navigation switches to the nearest tracked quest as you move. A quest you pick yourself (in the quest tracker, on the compass, or with the key binding) is kept until it leaves your quest log.
 - **Icons**: a yellow "?" for a quest ready to turn in, the dungeon or raid icon for a dungeon or raid quest still to do, a grey "?" for any other quest still to do.

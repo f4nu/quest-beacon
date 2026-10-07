@@ -327,6 +327,7 @@ end
 local ourPick      -- quest we last navigated to
 local manual       -- quest the player picked; held while it is in the log
 local placed       -- our map waypoint: {questID, mapID, x, y, north, west}
+local dismissed = {}  -- quests right-clicked away: skipped by nearest-first until picked again
 local quietUntil = 0
 
 local function SuperTracked()
@@ -387,6 +388,17 @@ local function Navigate(questID)
 	end
 end
 
+-- Nearest first, without the quests right-clicked away.
+local function Candidates()
+	local list = {}
+	for _, entry in ipairs(ns.ByDistance()) do
+		if not dismissed[entry.target.questID] then
+			list[#list + 1] = entry
+		end
+	end
+	return list
+end
+
 function ns.Choose()
 	if not ns.Settings().auto then
 		return
@@ -401,7 +413,7 @@ function ns.Choose()
 		end
 		manual = nil
 	end
-	local list = ns.ByDistance()
+	local list = Candidates()
 	local nearest = list[1]
 	if not nearest then
 		return
@@ -421,8 +433,28 @@ function ns.Choose()
 end
 
 function ns.Pick(questID)
+	dismissed[questID] = nil
 	manual = questID
 	Navigate(questID)
+end
+
+-- Right-click on the compass: stop navigating to this quest and go to the
+-- nearest other one. It stays out of nearest-first until picked again.
+function ns.Dismiss(questID)
+	dismissed[questID] = true
+	if manual == questID then
+		manual = nil
+	end
+	local nearest = Candidates()[1]
+	if nearest then
+		return Navigate(nearest.target.questID)
+	end
+	-- Nothing else to go to.
+	ourPick = nil
+	ClearOurWaypoint()
+	if SuperTracked() == questID then
+		C_SuperTrack.SetSuperTrackedQuestID(0)
+	end
 end
 
 function QuestBeacon_Next()
@@ -448,6 +480,7 @@ local function OnSuperTrackingChanged()
 	local questID = SuperTracked()
 	if questID and questID ~= ourPick then
 		manual = questID
+		dismissed[questID] = nil
 	end
 end
 

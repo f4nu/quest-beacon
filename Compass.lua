@@ -108,7 +108,8 @@ local function ShowTips(pin)
 		end
 		tip:AddLine(("%d yd"):format(math.floor(member.yards)), 0.7, 0.7, 0.7)
 		if i == #pin.members then
-			tip:AddLine(#pin.members > 1 and "Click to navigate to the nearest" or "Click to navigate here", 0.5, 0.5, 0.5)
+			tip:AddLine(#pin.members > 1 and "Click: navigate to the nearest" or "Click: navigate here", 0.5, 0.5, 0.5)
+			tip:AddLine("Right-click: drop it, go to the nearest other quest", 0.5, 0.5, 0.5)
 		end
 		tip:Show()
 	end
@@ -139,8 +140,22 @@ local function Pin(i)
 	pin.count:SetPoint("BOTTOMRIGHT", pin.badge, "BOTTOMRIGHT", 1, 0)
 	pin.count:SetJustifyH("CENTER")
 	pin.count:SetJustifyV("MIDDLE")
-	pin:SetScript("OnClick", function(self)
-		ns.Pick(self.members[1].target.questID)
+	pin:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	pin:SetScript("OnClick", function(self, button)
+		if button == "RightButton" then
+			-- The quest being navigated to, if it is in this pin; else the pin's nearest.
+			local current = ns.CurrentQuest()
+			local questID = self.members[1].target.questID
+			for _, member in ipairs(self.members) do
+				if member.target.questID == current then
+					questID = current
+					break
+				end
+			end
+			ns.Dismiss(questID)
+		else
+			ns.Pick(self.members[1].target.questID)
+		end
 	end)
 	pin:SetScript("OnEnter", ShowTips)
 	pin:SetScript("OnLeave", HideTips)
