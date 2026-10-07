@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: Quest Beacon
+## Notes: A compass bar with every tracked quest, and a marker in the world on the nearest one.
+## Author: Fanu
+## Version: @project-version@
+## SavedVariables: QuestBeaconDB
+
+Core.lua
+Compass.lua
+Marker.lua

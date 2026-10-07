@@ -1,0 +1,4 @@
+package-as: QuestBeacon
+
+ignore:
+  - README.md

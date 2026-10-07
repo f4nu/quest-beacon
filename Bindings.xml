@@ -1,0 +1,5 @@
+<Bindings>
+	<Binding name="QUESTBEACON_NEXT" header="QUESTBEACON" category="ADDONS">
+		QuestBeacon_Next()
+	</Binding>
+</Bindings>
