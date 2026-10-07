@@ -57,7 +57,47 @@ for _, spec in ipairs(CARDINALS) do
 	cardinals[#cardinals + 1] = label
 end
 
+local MERGE = 26   -- px: quests closer than this on the bar share one pin
 local pins = {}
+local tips = {}
+
+local function Tip(i)
+	if not tips[i] then
+		tips[i] = CreateFrame("GameTooltip", "QuestBeaconTooltip" .. i, UIParent, "GameTooltipTemplate")
+	end
+	return tips[i]
+end
+
+local function HideTips()
+	for _, tip in ipairs(tips) do
+		tip:Hide()
+	end
+end
+
+-- One tooltip per quest, nearest first, stacked under the pin.
+local function ShowTips(pin)
+	HideTips()
+	for i, member in ipairs(pin.members) do
+		local tip = Tip(i)
+		tip:SetOwner(pin, "ANCHOR_NONE")
+		tip:ClearAllPoints()
+		if i == 1 then
+			tip:SetPoint("TOP", pin, "BOTTOM", 0, -16)
+		else
+			tip:SetPoint("TOP", tips[i - 1], "BOTTOM", 0, -4)
+		end
+		local target = member.target
+		tip:AddLine(target.title, 1, 0.82, 0)
+		if target.detail then
+			tip:AddLine(target.detail, 1, 1, 1, true)
+		end
+		tip:AddLine(("%d yd"):format(math.floor(member.yards)), 0.7, 0.7, 0.7)
+		if i == #pin.members then
+			tip:AddLine(#pin.members > 1 and "Click to navigate to the nearest" or "Click to navigate here", 0.5, 0.5, 0.5)
+		end
+		tip:Show()
+	end
+end
 
 local function Pin(i)
 	local pin = pins[i]
@@ -65,32 +105,29 @@ local function Pin(i)
 		return pin
 	end
 	pin = CreateFrame("Button", nil, bar)
-	pin:SetSize(18, 18)
-	pin.icon = pin:CreateTexture(nil, "OVERLAY")
+	pin.icon = pin:CreateTexture(nil, "ARTWORK")
 	pin.icon:SetAllPoints()
 	pin.distance = pin:CreateFontString(nil, "OVERLAY")
 	pin.distance:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
 	pin.distance:SetPoint("TOP", pin, "BOTTOM", 0, -2)
+	pin.badge = pin:CreateTexture(nil, "ARTWORK", nil, 1)
+	pin.badge:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+	pin.badge:SetVertexColor(0, 0, 0, 0.85)
+	pin.badge:SetSize(14, 14)
+	pin.badge:SetPoint("CENTER", pin, "BOTTOMRIGHT", -1, 3)
+	pin.count = pin:CreateFontString(nil, "OVERLAY")
+	pin.count:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
+	pin.count:SetPoint("CENTER", pin.badge, "CENTER", 0, 0)
 	pin:SetScript("OnClick", function(self)
-		ns.Pick(self.target.questID)
+		ns.Pick(self.members[1].target.questID)
 	end)
-	pin:SetScript("OnEnter", function(self)
-		local target = self.target
-		GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-		GameTooltip:AddLine(target.title, 1, 0.82, 0)
-		if target.detail then
-			GameTooltip:AddLine(target.detail, 1, 1, 1, true)
-		end
-		if self.yards then
-			GameTooltip:AddLine(("%d yd"):format(math.floor(self.yards)), 0.7, 0.7, 0.7)
-		end
-		GameTooltip:AddLine("Click to navigate here", 0.5, 0.5, 0.5)
-		GameTooltip:Show()
-	end)
-	pin:SetScript("OnLeave", GameTooltip_Hide)
+	pin:SetScript("OnEnter", ShowTips)
+	pin:SetScript("OnLeave", HideTips)
 	pins[i] = pin
 	return pin
 end
+
+local entries, groups = {}, {}
 
 local function Draw()
 	local facing = GetPlayerFacing()
@@ -107,27 +144,59 @@ local function Draw()
 		label:SetPoint("CENTER", bar, "CENTER", x, 0)
 	end
 
-	local superTracked = C_SuperTrack.GetSuperTrackedQuestID()
-	local used = 0
+	-- Every located quest, left to right on the bar.
+	wipe(entries)
 	for _, target in ipairs(ns.targets) do
 		if target.north and target.instance == instance then
-			used = used + 1
-			local pin = Pin(used)
 			local yards, bearing = ns.Measure(target, north, west)
 			local x, within = Offset(bearing, facing)
-			local current = target.questID == superTracked
-			pin.target, pin.yards = target, yards
-			ns.SetQuestIcon(pin.icon, target.complete)
-			pin:SetSize(current and 24 or 18, current and 24 or 18)
-			pin:SetFrameLevel(bar:GetFrameLevel() + (current and 3 or 2))
-			pin:SetAlpha(within and 1 or 0.45)
-			pin.distance:SetText(within and ("%d"):format(math.floor(yards)) or "")
-			pin.distance:SetTextColor(current and 1 or 0.8, current and 0.82 or 0.8, current and 0 or 0.8)
-			pin:SetPoint("CENTER", bar, "CENTER", x, 0)
-			pin:Show()
+			entries[#entries + 1] = { target = target, yards = yards, x = x, within = within }
 		end
 	end
-	for i = used + 1, #pins do
+	table.sort(entries, function(a, b) return a.x < b.x end)
+
+	-- Neighbours within MERGE px of a group's first quest join it.
+	wipe(groups)
+	local group
+	for _, entry in ipairs(entries) do
+		if group and entry.x - group[1].x <= MERGE and entry.within == group[1].within then
+			group[#group + 1] = entry
+		else
+			group = { entry }
+			groups[#groups + 1] = group
+		end
+	end
+
+	local superTracked = C_SuperTrack.GetSuperTrackedQuestID()
+	for i, members in ipairs(groups) do
+		table.sort(members, function(a, b) return a.yards < b.yards end)
+		local x, complete, current = 0, false, false
+		for _, member in ipairs(members) do
+			x = x + member.x
+			complete = complete or member.target.complete
+			current = current or member.target.questID == superTracked
+		end
+		x = x / #members
+		local many = #members > 1
+		local within = members[1].within
+
+		local pin = Pin(i)
+		pin.members = members
+		ns.SetQuestIcon(pin.icon, complete)
+		local size = (many and 24 or 18) + (current and 6 or 0)
+		pin:SetSize(size, size)
+		pin:SetFrameLevel(bar:GetFrameLevel() + (current and 3 or 2))
+		pin:SetAlpha(within and 1 or 0.45)
+		pin.badge:SetShown(many)
+		pin.count:SetShown(many)
+		pin.count:SetText(#members)
+		local near, far = math.floor(members[1].yards), math.floor(members[#members].yards)
+		pin.distance:SetText(not within and "" or (many and near ~= far) and ("%d-%d"):format(near, far) or near)
+		pin.distance:SetTextColor(current and 1 or 0.8, current and 0.82 or 0.8, current and 0 or 0.8)
+		pin:SetPoint("CENTER", bar, "CENTER", x, 0)
+		pin:Show()
+	end
+	for i = #groups + 1, #pins do
 		pins[i]:Hide()
 	end
 end
