@@ -5,8 +5,6 @@
 
 local _, ns = ...
 
-local TEX_TURNIN = "Interface\\GossipFrame\\ActiveQuestIcon"
-local TEX_PROGRESS = "Interface\\GossipFrame\\IncompleteQuestIcon"
 
 local marker = CreateFrame("Frame", "QuestBeaconMarker", UIParent)
 marker:SetSize(28, 28)
@@ -122,7 +120,7 @@ updater:SetScript("OnUpdate", function(_, dt)
 	end
 
 	local clamped = C_Navigation.WasClampedToScreen()
-	icon:SetTexture(complete and TEX_TURNIN or TEX_PROGRESS)
+	ns.SetQuestIcon(icon, complete)
 	title:SetText(questTitle)
 	detail:SetText(objective or "")
 	title:SetShown(not clamped)

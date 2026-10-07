@@ -68,6 +68,18 @@ function ns.Describe(questID)
 	return title, complete, detail
 end
 
+-- The game's own map-pin art for a quest; the old gossip icons if a client lacks it.
+function ns.SetQuestIcon(texture, complete)
+	if texture.questComplete == complete then
+		return
+	end
+	texture.questComplete = complete
+	local atlas = complete and "UI-QuestIcon-TurnIn-Normal" or "Quest-In-Progress-Icon-yellow"
+	if not texture:SetAtlas(atlas) then
+		texture:SetTexture(complete and "Interface\\GossipFrame\\ActiveQuestIcon" or "Interface\\GossipFrame\\IncompleteQuestIcon")
+	end
+end
+
 -- The player's map and its parents up to the continent.
 local function MapChain(mapID)
 	local chain = {}

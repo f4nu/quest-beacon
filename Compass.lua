@@ -7,8 +7,6 @@ local _, ns = ...
 local WIDTH, HEIGHT = 560, 24
 local SPAN = math.pi / 2          -- radians from the centre to either end of the bar
 local TWO_PI = 2 * math.pi
-local TEX_TURNIN = "Interface\\GossipFrame\\ActiveQuestIcon"
-local TEX_PROGRESS = "Interface\\GossipFrame\\IncompleteQuestIcon"
 
 -- Bearings counter-clockwise from north, as GetPlayerFacing measures them.
 local CARDINALS = {
@@ -119,7 +117,7 @@ local function Draw()
 			local x, within = Offset(bearing, facing)
 			local current = target.questID == superTracked
 			pin.target, pin.yards = target, yards
-			pin.icon:SetTexture(target.complete and TEX_TURNIN or TEX_PROGRESS)
+			ns.SetQuestIcon(pin.icon, target.complete)
 			pin:SetSize(current and 24 or 18, current and 24 or 18)
 			pin:SetFrameLevel(bar:GetFrameLevel() + (current and 3 or 2))
 			pin:SetAlpha(within and 1 or 0.45)
