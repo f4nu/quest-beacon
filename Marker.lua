@@ -125,7 +125,7 @@ updater:SetScript("OnUpdate", function(_, dt)
 	end
 
 	local clamped = C_Navigation.WasClampedToScreen()
-	ns.SetQuestIcon(icon, complete, kind, 28)
+	ns.SetQuestIcon(icon, complete, kind, 28, 2)
 	title:SetText(questTitle)
 	detail:SetText(objective or "")
 	title:SetShown(not clamped)

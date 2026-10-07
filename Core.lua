@@ -111,11 +111,10 @@ end
 -- A quest's icon: ready for turn-in, the map-pin "?"; a dungeon or raid quest
 -- still to do, its entrance icon in colour; any other quest still to do, the
 -- "?" in grey. The old gossip icon if a client lacks the art. The entrance
--- art is mostly glow, so it is drawn at twice the size to match the "?".
+-- art is mostly glow, so it is drawn larger than the "?", by entranceScale.
 local ATLAS = { dungeon = "Dungeon", raid = "Raid" }
-local ENTRANCE_SCALE = 2
 
-function ns.SetQuestIcon(texture, complete, kind, size)
+function ns.SetQuestIcon(texture, complete, kind, size, entranceScale)
 	kind = not complete and kind or nil
 	if texture.questComplete ~= complete or texture.questKind ~= kind then
 		texture.questComplete, texture.questKind = complete, kind
@@ -129,7 +128,7 @@ function ns.SetQuestIcon(texture, complete, kind, size)
 			texture:SetDesaturated(not complete)
 		end
 	end
-	size = size * (texture.entrance and ENTRANCE_SCALE or 1)
+	size = size * (texture.entrance and entranceScale or 1)
 	texture:SetSize(size, size)
 end
 

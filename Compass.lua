@@ -226,7 +226,7 @@ local function Draw(dt)
 		pin.members = members
 		local size = (many and 24 or 18) + (current and 6 or 0)
 		pin:SetSize(size, size)
-		ns.SetQuestIcon(pin.icon, nearest.complete, nearest.kind, size)
+		ns.SetQuestIcon(pin.icon, nearest.complete, nearest.kind, size, 1.4)
 		pin:SetFrameLevel(bar:GetFrameLevel() + (current and 3 or 2))
 		pin:SetAlpha(within and 1 or 0.45)
 		pin.badge:SetShown(many)
