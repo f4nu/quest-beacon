@@ -106,6 +106,7 @@ function ns.Refresh()
 			local spot = onMap[questID]
 			if spot then
 				target.north, target.west, target.instance = ToWorld(spot[1], spot[2], spot[3])
+				target.source = ("quest area on map %d (%.3f, %.3f)"):format(spot[1], spot[2], spot[3])
 			end
 			-- No spot, or one in another instance (you are in the Deeprun Tram, it is
 			-- outside): the game's next waypoint, which may be the way out.
@@ -115,6 +116,7 @@ function ns.Refresh()
 					local north, west, instance = ToWorld(mapID, x, y)
 					if instance == here or not target.instance then
 						target.north, target.west, target.instance = north, west, instance
+						target.source = ("next waypoint on map %d (%.3f, %.3f)"):format(mapID, x, y)
 					end
 				end
 			end
@@ -292,11 +294,40 @@ SlashCmdList.QUESTBEACON = function(msg)
 		Soon()
 	elseif msg == "next" then
 		QuestBeacon_Next()
+	elseif msg == "why" then
+		ns.Diagnose()
 	elseif msg == "move" then
 		if ns.ToggleMove then
 			ns.ToggleMove()
 		end
 	else
-		print("Quest Beacon: /qb compass | marker | auto | next | move")
+		print("Quest Beacon: /qb compass | marker | auto | next | move | why")
+	end
+end
+
+-- /qb why: where the player is, and where each tracked quest is believed to be.
+function ns.Diagnose()
+	local function S(v)
+		return v == nil and "nil" or tostring(v)
+	end
+	local name, instanceType, _, _, _, _, _, instanceID = GetInstanceInfo()
+	local uNorth, uWest, _, uInstance = UnitPosition("player")
+	local mapID = C_Map.GetBestMapForUnit("player")
+	local mapInfo = mapID and C_Map.GetMapInfo(mapID)
+	print("Quest Beacon: you")
+	print(("  instance %s (%s, %s), map %s %s"):format(S(instanceID), S(name), S(instanceType), S(mapID),
+		mapInfo and ("(" .. mapInfo.name .. ", parent " .. S(mapInfo.parentMapID) .. ")") or ""))
+	print(("  UnitPosition north %s west %s instance %s"):format(S(uNorth and math.floor(uNorth)),
+		S(uWest and math.floor(uWest)), S(uInstance)))
+	local north, west = ns.PlayerPosition()
+	local superTracked = C_SuperTrack.GetSuperTrackedQuestID()
+	print(("  game navigates to quest %s, %s yd away"):format(S(superTracked),
+		S(C_Navigation.GetFrame() and math.floor(C_Navigation.GetDistance()))))
+	for _, target in ipairs(ns.targets) do
+		local yards = target.north and north and math.floor((ns.Measure(target, north, west)))
+		print(("  %s%d %s: %s, instance %s, north %s west %s, %s yd"):format(
+			target.questID == superTracked and "> " or "", target.questID, target.title, S(target.source),
+			S(target.instance), S(target.north and math.floor(target.north)), S(target.west and math.floor(target.west)),
+			S(yards)))
 	end
 end
