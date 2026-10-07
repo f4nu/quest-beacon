@@ -121,7 +121,7 @@ local function Pin(i)
 	end
 	pin = CreateFrame("Button", nil, bar)
 	pin.icon = pin:CreateTexture(nil, "ARTWORK")
-	pin.icon:SetAllPoints()
+	pin.icon:SetPoint("CENTER")
 	-- Badge and distance hang off the pin's centre, which sits on the bar's
 	-- middle line: they stay at one height whatever size the icon is.
 	pin.distance = pin:CreateFontString(nil, "OVERLAY")
@@ -224,9 +224,9 @@ local function Draw(dt)
 
 		local pin = Pin(i)
 		pin.members = members
-		ns.SetQuestIcon(pin.icon, nearest.complete, nearest.kind)
 		local size = (many and 24 or 18) + (current and 6 or 0)
 		pin:SetSize(size, size)
+		ns.SetQuestIcon(pin.icon, nearest.complete, nearest.kind, size)
 		pin:SetFrameLevel(bar:GetFrameLevel() + (current and 3 or 2))
 		pin:SetAlpha(within and 1 or 0.45)
 		pin.badge:SetShown(many)

@@ -23,7 +23,7 @@ disc:SetSize(30, 30)
 disc:SetPoint("CENTER")
 
 local icon = marker:CreateTexture(nil, "ARTWORK")
-icon:SetAllPoints()
+icon:SetPoint("CENTER")
 
 local detail = marker:CreateFontString(nil, "OVERLAY")
 detail:SetFont(STANDARD_TEXT_FONT, 11, "OUTLINE")
@@ -125,7 +125,7 @@ updater:SetScript("OnUpdate", function(_, dt)
 	end
 
 	local clamped = C_Navigation.WasClampedToScreen()
-	ns.SetQuestIcon(icon, complete, kind)
+	ns.SetQuestIcon(icon, complete, kind, 28)
 	title:SetText(questTitle)
 	detail:SetText(objective or "")
 	title:SetShown(not clamped)

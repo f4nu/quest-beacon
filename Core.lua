@@ -110,23 +110,27 @@ end
 
 -- A quest's icon: ready for turn-in, the map-pin "?"; a dungeon or raid quest
 -- still to do, its entrance icon in colour; any other quest still to do, the
--- "?" in grey. The old gossip icon if a client lacks the art.
+-- "?" in grey. The old gossip icon if a client lacks the art. The entrance
+-- art is mostly glow, so it is drawn at twice the size to match the "?".
 local ATLAS = { dungeon = "Dungeon", raid = "Raid" }
+local ENTRANCE_SCALE = 2
 
-function ns.SetQuestIcon(texture, complete, kind)
+function ns.SetQuestIcon(texture, complete, kind, size)
 	kind = not complete and kind or nil
-	if texture.questComplete == complete and texture.questKind == kind then
-		return
+	if texture.questComplete ~= complete or texture.questKind ~= kind then
+		texture.questComplete, texture.questKind = complete, kind
+		texture.entrance = kind ~= nil and texture:SetAtlas(ATLAS[kind])
+		if texture.entrance then
+			texture:SetDesaturated(false)
+		else
+			if not texture:SetAtlas("UI-QuestIcon-TurnIn-Normal") then
+				texture:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon")
+			end
+			texture:SetDesaturated(not complete)
+		end
 	end
-	texture.questComplete, texture.questKind = complete, kind
-	if kind and texture:SetAtlas(ATLAS[kind]) then
-		texture:SetDesaturated(false)
-		return
-	end
-	if not texture:SetAtlas("UI-QuestIcon-TurnIn-Normal") then
-		texture:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon")
-	end
-	texture:SetDesaturated(not complete)
+	size = size * (texture.entrance and ENTRANCE_SCALE or 1)
+	texture:SetSize(size, size)
 end
 
 -- The player's map and its parents up to the continent.
