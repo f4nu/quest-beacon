@@ -120,10 +120,12 @@ local function Pin(i)
 	pin.badge:SetVertexColor(0, 0, 0, 0.85)
 	pin.badge:SetSize(14, 14)
 	pin.badge:SetPoint("CENTER", pin, "CENTER", 11, -9)
-	-- The number fills the badge, centred both ways.
+	-- The number fills the badge, centred both ways, 1px right: centred
+	-- digits still read a touch left in game.
 	pin.count = pin:CreateFontString(nil, "OVERLAY")
 	pin.count:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
-	pin.count:SetAllPoints(pin.badge)
+	pin.count:SetPoint("TOPLEFT", pin.badge, "TOPLEFT", 1, 0)
+	pin.count:SetPoint("BOTTOMRIGHT", pin.badge, "BOTTOMRIGHT", 1, 0)
 	pin.count:SetJustifyH("CENTER")
 	pin.count:SetJustifyV("MIDDLE")
 	pin:SetScript("OnClick", function(self)
