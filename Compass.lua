@@ -1,10 +1,12 @@
 -- A compass bar at the top of the screen: cardinal points, and a pin for each
 -- tracked quest at its bearing. Quests behind you sit at the nearer edge.
--- It follows the way your character faces, not the camera.
+-- It follows the way your character faces, not the camera: while the camera
+-- swings on its own (left button held), it fades.
 
 local _, ns = ...
 
-local WIDTH, HEIGHT = 560, 24
+local WIDTH, HEIGHT = ns.DEFAULTS.compassWidth, 24   -- width follows the settings
+local CAMERA_ALPHA = 0.2   -- the compass while the camera swings away from your facing
 local SPAN = math.pi / 2          -- radians from the centre to either end of the bar
 local TWO_PI = 2 * math.pi
 
@@ -33,14 +35,23 @@ bar:SetMovable(true)
 bar:Hide()
 
 -- Dark band fading out at both ends.
-local third = WIDTH / 3
-for i, spec in ipairs({ { "LEFT", 0, 0, 0.5 }, { "CENTER", 0, 0.5, 0.5 }, { "RIGHT", 0, 0.5, 0 } }) do
+local bands = {}
+for _, spec in ipairs({ { "LEFT", 0, 0.5 }, { "CENTER", 0.5, 0.5 }, { "RIGHT", 0.5, 0 } }) do
 	local band = bar:CreateTexture(nil, "BACKGROUND")
-	band:SetSize(third, HEIGHT)
-	band:SetPoint(spec[1], bar, spec[1], spec[2], 0)
+	band:SetPoint(spec[1], bar, spec[1], 0, 0)
 	band:SetColorTexture(1, 1, 1, 1)
-	band:SetGradient("HORIZONTAL", CreateColor(0, 0, 0, spec[3]), CreateColor(0, 0, 0, spec[4]))
+	band:SetGradient("HORIZONTAL", CreateColor(0, 0, 0, spec[2]), CreateColor(0, 0, 0, spec[3]))
+	bands[#bands + 1] = band
 end
+
+local function Resize(width)
+	WIDTH = width
+	bar:SetSize(WIDTH, HEIGHT)
+	for _, band in ipairs(bands) do
+		band:SetSize(WIDTH / 3, HEIGHT)
+	end
+end
+Resize(WIDTH)
 
 local centre = bar:CreateTexture(nil, "ARTWORK")
 centre:SetColorTexture(1, 0.82, 0, 0.9)
@@ -57,11 +68,11 @@ for _, spec in ipairs(CARDINALS) do
 	cardinals[#cardinals + 1] = label
 end
 
-local MERGE = 26       -- px: quests closer than this on the bar share one pin
+-- MERGE (px: quests closer than this on the bar share one pin) is a setting.
 local LABEL_TOP = 14   -- px from the bar's middle line down to the first row of distances
 local LABEL_ROW = 11   -- px between the two rows
 local LABEL_GAP = 4    -- px kept clear between labels on one row
-local LABEL_FADE = WIDTH / 4   -- px from the centre where a distance has faded out
+-- A distance fades out a quarter of the bar's width from its centre.
 local pins = {}
 local tips = {}
 
@@ -138,15 +149,28 @@ local function Pin(i)
 end
 
 local entries, groups = {}, {}
+local alpha = 1
 
-local function Draw()
+-- Left button held in mouse-look: the camera turns, your character does not.
+-- (With the right button, or both, the character turns too.)
+local function CameraSwinging()
+	return ns.Settings().cameraFade and IsMouselooking() and IsMouseButtonDown("LeftButton")
+		and not IsMouseButtonDown("RightButton")
+end
+
+local function Draw(dt)
 	local facing = GetPlayerFacing()
 	local north, west, instance = ns.PlayerPosition()
 	if not facing or not north then
+		alpha = 0
 		bar:SetAlpha(0)
 		return
 	end
-	bar:SetAlpha(1)
+	-- Ease towards the wanted alpha rather than blink.
+	local want = CameraSwinging() and CAMERA_ALPHA or 1
+	alpha = alpha + (want - alpha) * math.min(1, dt * 12)
+	bar:SetAlpha(alpha)
+	local merge = ns.Settings().merge
 
 	for _, label in ipairs(cardinals) do
 		local x, within = Offset(label.bearing, facing)
@@ -165,11 +189,11 @@ local function Draw()
 	end
 	table.sort(entries, function(a, b) return a.x < b.x end)
 
-	-- Neighbours within MERGE px of a group's first quest join it.
+	-- Neighbours within merge px of a group's first quest join it.
 	wipe(groups)
 	local group
 	for _, entry in ipairs(entries) do
-		if group and entry.x - group[1].x <= MERGE and entry.within == group[1].within then
+		if group and entry.x - group[1].x <= merge and entry.within == group[1].within then
 			group[#group + 1] = entry
 		else
 			group = { entry }
@@ -177,13 +201,14 @@ local function Draw()
 		end
 	end
 
-	local superTracked = C_SuperTrack.GetSuperTrackedQuestID()
+	local superTracked = ns.CurrentQuest()
 	for i, members in ipairs(groups) do
 		table.sort(members, function(a, b) return a.yards < b.yards end)
-		local x, complete, current = 0, false, false
+		-- The pin looks like its nearest quest.
+		local nearest = members[1].target
+		local x, current = 0, false
 		for _, member in ipairs(members) do
 			x = x + member.x
-			complete = complete or member.target.complete
 			current = current or member.target.questID == superTracked
 		end
 		x = x / #members
@@ -192,7 +217,7 @@ local function Draw()
 
 		local pin = Pin(i)
 		pin.members = members
-		ns.SetQuestIcon(pin.icon, complete)
+		ns.SetQuestIcon(pin.icon, nearest.complete, nearest.kind)
 		local size = (many and 24 or 18) + (current and 6 or 0)
 		pin:SetSize(size, size)
 		pin:SetFrameLevel(bar:GetFrameLevel() + (current and 3 or 2))
@@ -204,7 +229,7 @@ local function Draw()
 		pin.badge:SetSize(badge, badge)
 		-- The nearest distance, clear at the centre and fading out towards the
 		-- sides: gone with a quarter of the bar left.
-		local fade = 1 - math.abs(x) / LABEL_FADE
+		local fade = 1 - math.abs(x) / (WIDTH / 4)
 		pin.distance:SetText(within and fade > 0 and ns.Yards(members[1].yards) or "")
 		pin.distance:SetAlpha(math.max(fade, 0))
 		pin.distance:SetTextColor(current and 1 or 0.8, current and 0.82 or 0.8, current and 0 or 0.8)
@@ -240,8 +265,8 @@ local elapsed = 0
 bar:SetScript("OnUpdate", function(_, dt)
 	elapsed = elapsed + dt
 	if elapsed >= 0.02 then
+		Draw(elapsed)
 		elapsed = 0
-		Draw()
 	end
 end)
 
@@ -252,6 +277,7 @@ local function Apply()
 		bar:ClearAllPoints()
 		bar:SetPoint(p[1], UIParent, p[2], p[3], p[4])
 	end
+	Resize(settings.compassWidth)
 	bar:SetShown(settings.compass)
 end
 
@@ -275,10 +301,4 @@ function ns.ToggleMove()
 	print("Quest Beacon: compass " .. (moving and "unlocked, drag it" or "locked"))
 end
 
-local previous = ns.OnSettingsChanged
-function ns.OnSettingsChanged()
-	if previous then
-		previous()
-	end
-	Apply()
-end
+ns.AddDisplay(Apply)

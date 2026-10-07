@@ -87,8 +87,9 @@ updater:SetScript("OnUpdate", function(_, dt)
 		return Off()
 	end
 	local nav = C_Navigation.GetFrame()
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	if not nav or not questID or questID == 0 then
+	-- The quest navigated to, by the game's quest navigation or our waypoint.
+	local questID = ns.CurrentQuest()
+	if not nav or not questID then
 		return Off()
 	end
 
@@ -115,15 +116,16 @@ updater:SetScript("OnUpdate", function(_, dt)
 		anchoredTo = nav
 	end
 
-	local questTitle, complete, objective
+	local questTitle, complete, objective, kind
 	if target then
-		questTitle, complete, objective = target.title, target.complete, target.detail
+		questTitle, complete, objective, kind = target.title, target.complete, target.detail, target.kind
 	else
 		questTitle, complete, objective = ns.Describe(questID)
+		kind = ns.Kind(questID)
 	end
 
 	local clamped = C_Navigation.WasClampedToScreen()
-	ns.SetQuestIcon(icon, complete)
+	ns.SetQuestIcon(icon, complete, kind)
 	title:SetText(questTitle)
 	detail:SetText(objective or "")
 	title:SetShown(not clamped)
@@ -138,12 +140,8 @@ updater:SetScript("OnUpdate", function(_, dt)
 	SetGameMarkerHidden(true)
 end)
 
-local previous = ns.OnSettingsChanged
-function ns.OnSettingsChanged()
-	if previous then
-		previous()
-	end
+ns.AddDisplay(function()
 	if not ns.Settings().marker then
 		Off()
 	end
-end
+end)

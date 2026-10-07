@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bronze" cx="40%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#f2d38a"/>
+      <stop offset="0.45" stop-color="#b8863b"/>
+      <stop offset="1" stop-color="#4a2f10"/>
+    </radialGradient>
+    <radialGradient id="bowl" cx="50%" cy="45%" r="60%">
+      <stop offset="0" stop-color="#1d2a3a"/>
+      <stop offset="1" stop-color="#05070b"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffd84a" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#ffd84a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6a0"/>
+      <stop offset="0.5" stop-color="#ffcc12"/>
+      <stop offset="1" stop-color="#c77800"/>
+    </linearGradient>
+    <filter id="soft" x="-50%" y="-10%" width="200%" height="120%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <clipPath id="inside">
+      <circle cx="256" cy="256" r="191"/>
+    </clipPath>
+  </defs>
+
+  <circle cx="256" cy="256" r="244" fill="url(#bronze)" stroke="#1e1206" stroke-width="10"/>
+  <circle cx="256" cy="256" r="196" fill="url(#bowl)" stroke="#1e1206" stroke-width="10"/>
+
+  <g clip-path="url(#inside)">
+    <!-- compass points -->
+    <g fill="#8a6a35" opacity="0.55">
+      <path d="M256 74 L274 238 L256 256 L238 238 Z"/>
+      <path d="M256 438 L274 274 L256 256 L238 274 Z"/>
+      <path d="M74 256 L238 238 L256 256 L238 274 Z"/>
+      <path d="M438 256 L274 238 L256 256 L274 274 Z"/>
+    </g>
+    <g fill="#c9a25a" opacity="0.8" font-family="Georgia, serif" font-weight="bold" font-size="40" text-anchor="middle">
+      <text x="256" y="112">N</text>
+    </g>
+    <!-- beacon beam -->
+    <rect x="206" y="40" width="100" height="330" fill="url(#beam)" filter="url(#soft)"/>
+    <rect x="248" y="60" width="16" height="300" fill="url(#beam)"/>
+    <!-- ground ring -->
+    <ellipse cx="256" cy="378" rx="82" ry="22" fill="none" stroke="#ffd84a" stroke-width="7" opacity="0.8"/>
+  </g>
+
+  <text x="256" y="372" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="290"
+        fill="url(#gold)" stroke="#2a1500" stroke-width="12" paint-order="stroke" stroke-linejoin="round">?</text>
+</svg>

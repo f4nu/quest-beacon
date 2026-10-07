@@ -3,8 +3,17 @@
 ## Notes: A compass bar with every tracked quest, and a marker in the world on the nearest one.
 ## Author: Fanu
 ## Version: @project-version@
+## IconTexture: Interface\AddOns\QuestBeacon\Media\icon
+## OptionalDeps: QuestieDB
 ## SavedVariables: QuestBeaconDB
 
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+
 Core.lua
+Questie.lua
 Compass.lua
 Marker.lua
+Settings.lua
