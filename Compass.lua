@@ -201,7 +201,8 @@ local function Draw()
 		pin.count:SetText(#members)
 		local badge = #members >= 10 and 17 or 14
 		pin.badge:SetSize(badge, badge)
-		pin.distance:SetText(within and ns.Yards(members[1].yards) or "")
+		local near, far = ns.Yards(members[1].yards), ns.Yards(members[#members].yards)
+		pin.distance:SetText(not within and "" or (many and near ~= far) and (near .. "-" .. far) or near)
 		pin.distance:SetTextColor(current and 1 or 0.8, current and 0.82 or 0.8, current and 0 or 0.8)
 		pin.x = x
 		pin:SetPoint("CENTER", bar, "CENTER", x, 0)
