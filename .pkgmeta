@@ -8,4 +8,5 @@ externals:
 
 ignore:
   - art
+  - curseforge
   - README.md
