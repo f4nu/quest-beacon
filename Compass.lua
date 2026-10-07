@@ -61,6 +61,7 @@ local MERGE = 26       -- px: quests closer than this on the bar share one pin
 local LABEL_TOP = 14   -- px from the bar's middle line down to the first row of distances
 local LABEL_ROW = 11   -- px between the two rows
 local LABEL_GAP = 4    -- px kept clear between labels on one row
+local LABEL_FADE = WIDTH / 4   -- px from the centre where a distance has faded out
 local pins = {}
 local tips = {}
 
@@ -201,8 +202,11 @@ local function Draw()
 		pin.count:SetText(#members)
 		local badge = #members >= 10 and 17 or 14
 		pin.badge:SetSize(badge, badge)
-		local near, far = ns.Yards(members[1].yards), ns.Yards(members[#members].yards)
-		pin.distance:SetText(not within and "" or (many and near ~= far) and (near .. "-" .. far) or near)
+		-- The nearest distance, clear at the centre and fading out towards the
+		-- sides: gone with a quarter of the bar left.
+		local fade = 1 - math.abs(x) / LABEL_FADE
+		pin.distance:SetText(within and fade > 0 and ns.Yards(members[1].yards) or "")
+		pin.distance:SetAlpha(math.max(fade, 0))
 		pin.distance:SetTextColor(current and 1 or 0.8, current and 0.82 or 0.8, current and 0 or 0.8)
 		pin.x = x
 		pin:SetPoint("CENTER", bar, "CENTER", x, 0)
