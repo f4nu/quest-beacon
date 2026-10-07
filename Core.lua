@@ -108,21 +108,28 @@ function ns.Kind(questID)
 	return tag and KINDS[tag.tagID]
 end
 
--- Hard: the quests the game's tracker shows in red, by the same call.
+-- Hard: the quests the game's tracker shows in orange or red, by the same
+-- call. Returns the tier's name in QuestDifficultyColors, else nil.
+local HARD = {}
+if Enum.RelativeContentDifficulty then
+	HARD[Enum.RelativeContentDifficulty.Difficult] = "verydifficult"
+	HARD[Enum.RelativeContentDifficulty.Impossible] = "impossible"
+end
+
 function ns.Hard(questID)
-	return C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID) == Enum.RelativeContentDifficulty.Impossible
+	return HARD[C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID)]
 end
 
 -- A quest's icon: ready for turn-in, the map-pin "?"; a dungeon or raid quest
 -- still to do, its entrance icon in colour; any other quest still to do, the
--- "?" in grey, or in the tracker's red when hard and the caller asks for it.
+-- "?" in grey, or in the tracker's orange or red when hard and the caller asks.
 -- The old gossip icon if a client lacks the art. The entrance art is mostly
 -- glow, so it is drawn larger than the "?", by entranceScale.
 local ATLAS = { dungeon = "Dungeon", raid = "Raid" }
 
 function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, hard)
 	kind = not complete and kind or nil
-	hard = not complete and not kind and hard or false
+	hard = not complete and not kind and hard or nil
 	if texture.questComplete ~= complete or texture.questKind ~= kind or texture.questHard ~= hard then
 		texture.questComplete, texture.questKind, texture.questHard = complete, kind, hard
 		texture.entrance = kind ~= nil and texture:SetAtlas(ATLAS[kind])
@@ -135,9 +142,9 @@ function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, hard)
 			texture:SetDesaturated(not complete)
 		end
 		-- The grey "?" tinted takes the tint's colour cleanly.
-		local red = hard and QuestDifficultyColors.impossible
-		if red then
-			texture:SetVertexColor(red.r, red.g, red.b)
+		local tint = hard and QuestDifficultyColors[hard]
+		if tint then
+			texture:SetVertexColor(tint.r, tint.g, tint.b)
 		else
 			texture:SetVertexColor(1, 1, 1)
 		end
