@@ -14,7 +14,7 @@ marker:EnableMouse(false)
 marker:Hide()
 
 local disc = marker:CreateTexture(nil, "BACKGROUND")
-disc:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+disc:SetTexture(ns.CIRCLE)
 disc:SetVertexColor(0, 0, 0, 0.55)
 disc:SetSize(30, 30)
 disc:SetPoint("CENTER")
