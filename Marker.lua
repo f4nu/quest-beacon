@@ -16,7 +16,7 @@ marker:Hide()
 local disc = marker:CreateTexture(nil, "BACKGROUND")
 disc:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
 disc:SetVertexColor(0, 0, 0, 0.55)
-disc:SetSize(36, 36)
+disc:SetSize(30, 30)
 disc:SetPoint("CENTER")
 
 local icon = marker:CreateTexture(nil, "ARTWORK")
