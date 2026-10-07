@@ -5,6 +5,7 @@
 ## Version: @project-version@
 ## IconTexture: Interface\AddOns\QuestBeacon\Media\icon
 ## OptionalDeps: QuestieDB
+## X-Curse-Project-ID: 1731988
 ## SavedVariables: QuestBeaconDB
 
 Libs\LibStub\LibStub.lua
