@@ -2,41 +2,56 @@
 
 # Quest Beacon
 
-WoW: Forever addon.
+**Every tracked quest on a compass bar. The nearest one marked in the world.**
 
-- **Compass bar** at the top of the screen with a pin for every tracked quest, at its direction, with the distance. Quests close together share one pin with a count; hover it for every quest, nearest first. Click a pin to navigate there; right-click it to drop that quest and go to the nearest other one. It turns with your character, and fades while you swing the camera with the left mouse button.
-- **World marker** on the quest being navigated to: quest, next objective, distance. It replaces the game's own diamond, and sits under the rest of the interface.
-- **Nearest first**: navigation switches to the nearest tracked quest as you move. A quest you pick yourself (in the quest tracker, on the compass, or with the key binding) is kept until it leaves your quest log.
-- **Icons**: a yellow "?" for a quest ready to turn in, the dungeon or raid icon for a dungeon or raid quest still to do, a grey "?" for any other quest still to do.
-
-Locations are the game's own quest areas. With [QuestieDB](https://github.com/Questie/QuestieDB) installed, the nearest spawn of whatever the quest still needs (or of whoever takes it in) is used instead, and navigation goes through a map waypoint on it. A quest with no location gets no pin.
-
-The game places only one point in the 3D world for addons, so only one quest at a time gets a world marker. The compass covers the rest.
-
-## Screenshots
-
-The compass: grouped quests with their count, dungeon quests with the dungeon icon.
+A WoW: Forever addon. No more opening the map to see where to go next.
 
 ![Compass](screenshots/compass_1.jpg)
 
-The world marker on the nearest quest, with its next objective and distance.
+## Features
+
+- **Compass bar**: a pin for every tracked quest at its real direction, with the distance. Turns with your character.
+- **World marker**: stands on the quest you're heading to, with its name, next objective and distance. Replaces the game's diamond.
+- **Nearest first**: navigation switches to the closest quest as you move. Pick one yourself and it sticks until it's done.
+- **Click to go**: click a pin to navigate there. Right-click to skip that quest and go to the next nearest.
+- **Grouping**: quests close together share one pin with a count. Hover for the list, nearest first.
+- **Tells quests apart at a glance**: yellow "?" ready to turn in, dungeon and raid icons, orange and red for hard quests, same colours as the quest tracker.
+- **Stays out of the way**: fades while you swing the camera, hides on flight paths, sits under the rest of the UI.
 
 ![World marker](screenshots/compass_2.jpg)
 
-The settings page.
+## Better with QuestieDB
+
+Install [QuestieDB](https://github.com/Questie/QuestieDB) and pins point at the nearest mob, object or NPC the quest actually needs, not just the game's quest area.
+
+## Works with
+
+- QuestieDB (optional, better locations)
+- Leatrix Plus and other minimap button collectors
+- QuestMaster: also picks the navigated quest, so turn off one of the two world markers
+
+## Setup
+
+Nothing to set up. To change things: `/qb`, the minimap button, or Options → AddOns → Quest Beacon.
 
 ![Settings](screenshots/compass_3.jpg)
 
-## Settings
+| Command | |
+|---|---|
+| `/qb` | settings |
+| `/qb next` | next quest by distance (also a key binding) |
+| `/qb move` | unlock the compass to drag it |
+| `/qb compass` / `marker` / `auto` | toggle compass, world marker, nearest first |
+| `/qb why` | where each quest is believed to be |
 
-Options → AddOns → Quest Beacon, or the minimap button (left-click: settings, right-click: compass on/off). The button works with minimap button collectors such as Leatrix Plus.
+## Good to know
 
-## Commands
+The game lets addons place only one point in the 3D world, so only one quest gets a world marker at a time. The compass covers the rest.
 
-- `/qb`: settings
-- `/qb compass`, `/qb marker`, `/qb auto`: switch the compass, the world marker, nearest-first navigation on or off
-- `/qb next`: navigate to the next tracked quest by distance (also a key binding under AddOns)
-- `/qb move`: unlock the compass to drag it, again to lock
-- `/qb why`: where each tracked quest is believed to be, and why
+## Download
 
-QuestMaster also picks which quest the game navigates to. Running both, turn off one of the two world markers.
+[CurseForge](https://www.curseforge.com/wow/addons/quest-beacon) · [GitHub releases](https://github.com/f4nu/quest-beacon/releases)
+
+## Bugs and ideas
+
+[GitHub issues](https://github.com/f4nu/quest-beacon/issues)

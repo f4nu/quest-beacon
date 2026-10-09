@@ -1,47 +1,49 @@
 # Quest Beacon
 
-A compass bar with every tracked quest, and a marker in the world on the nearest one.
+**Every tracked quest on a compass bar. The nearest one marked in the world.**
 
-## Compass
+No more opening the map to see where to go next.
 
-- A bar at the top of the screen with a pin for every tracked quest, at its direction, with the distance.
-- Quests close together share one pin with a count. Hover it to see every quest in it, nearest first.
-- Click a pin to navigate there.
-- Right-click a pin to drop that quest and go to the nearest other one. It stays out of nearest-first until you pick it again.
-- It turns with your character, and fades while you swing the camera with the left mouse button.
+![Compass](https://raw.githubusercontent.com/f4nu/quest-beacon/main/screenshots/compass_1.jpg)
 
-## World marker
+## Features
 
-- Stands on the quest being navigated to, with the quest name, the next objective and the distance.
-- Replaces the game's own diamond, and stays under the rest of the interface.
+- **Compass bar**: a pin for every tracked quest at its real direction, with the distance. Turns with your character.
+- **World marker**: stands on the quest you're heading to, with its name, next objective and distance. Replaces the game's diamond.
+- **Nearest first**: navigation switches to the closest quest as you move. Pick one yourself and it sticks until it's done.
+- **Click to go**: click a pin to navigate there. Right-click to skip that quest and go to the next nearest.
+- **Grouping**: quests close together share one pin with a count. Hover for the list, nearest first.
+- **Tells quests apart at a glance**: yellow "?" ready to turn in, dungeon and raid icons, orange and red for hard quests, same colours as the quest tracker.
+- **Stays out of the way**: fades while you swing the camera, hides on flight paths, sits under the rest of the UI.
 
-## Nearest first
+![World marker](https://raw.githubusercontent.com/f4nu/quest-beacon/main/screenshots/compass_2.jpg)
 
-Navigation switches to the nearest tracked quest as you move. A quest you pick yourself, in the quest tracker, on the compass or with the key binding, is kept until it leaves your quest log.
+## Better with QuestieDB
 
-## Icons
+Install [QuestieDB](https://github.com/Questie/QuestieDB) and pins point at the nearest mob, object or NPC the quest actually needs, not just the game's quest area.
 
-- Yellow "?": ready to turn in.
-- Dungeon or raid icon: a dungeon or raid quest still to do.
-- Grey "?": any other quest still to do.
+## Works with
 
-## QuestieDB (optional)
+- QuestieDB (optional, better locations)
+- Leatrix Plus and other minimap button collectors
+- QuestMaster: also picks the navigated quest, so turn off one of the two world markers
 
-Locations are the game's own quest areas. With QuestieDB installed, the nearest spawn of whatever the quest still needs, or of whoever takes it in, is used instead. Navigation then goes through a map waypoint on that spot.
+## Setup
 
-## Settings
+Nothing to set up. To change things: `/qb`, the minimap button, or Options → AddOns → Quest Beacon.
 
-Options → AddOns → Quest Beacon, `/qb`, or the minimap button (left-click: settings, right-click: compass on/off). The button works with minimap button collectors such as Leatrix Plus.
+| Command | |
+|---|---|
+| `/qb` | settings |
+| `/qb next` | next quest by distance (also a key binding) |
+| `/qb move` | unlock the compass to drag it |
+| `/qb compass` / `marker` / `auto` | toggle compass, world marker, nearest first |
+| `/qb why` | where each quest is believed to be |
 
-## Commands
+## Good to know
 
-- `/qb`: settings
-- `/qb compass`, `/qb marker`, `/qb auto`: compass, world marker, nearest-first on or off
-- `/qb next`: next tracked quest by distance (also a key binding)
-- `/qb move`: unlock the compass to drag it, again to lock
-- `/qb why`: where each tracked quest is believed to be
+The game lets addons place only one point in the 3D world, so only one quest gets a world marker at a time. The compass covers the rest.
 
-## Notes
+## Bugs and ideas
 
-- The game places only one point in the 3D world for addons, so only one quest at a time gets a world marker. The compass covers the rest.
-- QuestMaster also picks which quest the game navigates to. If you run both, turn off one of the two world markers.
+[GitHub issues](https://github.com/f4nu/quest-beacon/issues)
