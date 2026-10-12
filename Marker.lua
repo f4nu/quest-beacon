@@ -141,7 +141,7 @@ updater:SetScript("OnUpdate", function(_, dt)
 	elseif place.kind == "giver" then
 		ns.SetGiverIcon(icon, place.tier, 28)
 	else
-		ns.SetFlightIcon(icon, place.atlas, place.undiscovered, 28)
+		ns.SetFlightIcon(icon, place.atlas, place.undiscovered, 28 * 0.7)   -- the flight art fills its square
 	end
 	title:SetText(questTitle)
 	detail:SetText(objective or "")
