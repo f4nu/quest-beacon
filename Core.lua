@@ -20,6 +20,12 @@ local DEFAULTS = {
 	compassScale = 100,   -- percent
 	compassOpacity = 100,   -- percent
 	questColors = true,
+	givers = true,
+	giverRange = 200,   -- yards
+	hideTrivial = true,
+	flights = true,
+	flightRange = 500,   -- yards
+	animate = true,
 	merge = 26,
 }
 ns.DEFAULTS = DEFAULTS
@@ -28,6 +34,7 @@ ns.DEFAULTS = DEFAULTS
 -- numbers on it looked off centre.
 ns.CIRCLE = "Interface\\AddOns\\" .. ADDON .. "\\Media\\circle"
 ns.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Media\\icon"
+ns.RING = "Interface\\AddOns\\" .. ADDON .. "\\Media\\ring"
 
 ns.targets = {}  -- tracked quests in watch order: {questID, title, complete, detail, north, west, instance, ...}
 ns.byQuest = {}
@@ -38,7 +45,7 @@ end
 
 local vec = CreateVector2D(0, 0)
 
-local function ToWorld(mapID, x, y)
+function ns.ToWorld(mapID, x, y)
 	vec:SetXY(x, y)
 	local instance, pos = C_Map.GetWorldPosFromMapPos(mapID, vec)
 	if pos then
@@ -46,6 +53,7 @@ local function ToWorld(mapID, x, y)
 		return north, west, instance
 	end
 end
+local ToWorld = ns.ToWorld
 
 -- The instance the player is in; known even where the position is hidden.
 function ns.Instance()
@@ -127,6 +135,24 @@ function ns.Tier(questID)
 	return TIERS[C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID)]
 end
 
+-- The same tiers from a quest's level, for quests not in the log: the bands
+-- of the game's GetQuestDifficultyColor.
+function ns.TierByLevel(level)
+	local diff = level - UnitLevel("player")
+	local green = (UnitQuestTrivialLevelRange and UnitQuestTrivialLevelRange("player"))
+		or (GetQuestGreenRange and GetQuestGreenRange()) or 8
+	if diff >= 5 then
+		return "impossible"
+	elseif diff >= 3 then
+		return "verydifficult"
+	elseif diff >= -2 then
+		return "difficult"
+	elseif -diff <= green then
+		return "standard"
+	end
+	return "trivial"
+end
+
 -- A tier's colour, or nil while quest colours are off.
 local function TierColor(tier)
 	return tier and ns.Settings().questColors and QuestDifficultyColors[tier]
@@ -143,8 +169,9 @@ local PIN_SCALE = 0.7
 function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, tier)
 	kind = not complete and kind or nil
 	local tint = not complete and not kind and TierColor(tier) or nil
-	if texture.questComplete ~= complete or texture.questKind ~= kind or texture.questTint ~= tint then
-		texture.questComplete, texture.questKind, texture.questTint = complete, kind, tint
+	if texture.questComplete ~= complete or texture.questKind ~= kind or texture.questTint ~= tint
+		or texture.questIcon ~= "quest" then
+		texture.questComplete, texture.questKind, texture.questTint, texture.questIcon = complete, kind, tint, "quest"
 		texture.entrance = kind ~= nil and texture:SetAtlas(ATLAS[kind])
 		if texture.entrance then
 			texture:SetDesaturated(false)
@@ -182,8 +209,44 @@ function ns.CreateTick(parent, icon, size, x, y)
 	return tick
 end
 
+-- An available quest's "!": in its tier's colour when colours are on, else
+-- the game's own yellow.
+function ns.SetGiverIcon(texture, tier, size)
+	local tint = TierColor(tier)
+	if texture.questTint ~= tint or texture.questIcon ~= "giver" then
+		texture.questTint, texture.questIcon = tint, "giver"
+		texture.questComplete, texture.questKind, texture.entrance = nil, nil, nil
+		if not texture:SetAtlas("QuestNormal") then
+			texture:SetTexture("Interface\\GossipFrame\\AvailableQuestIcon")
+		end
+		texture:SetDesaturated(tint ~= nil)
+		if tint then
+			texture:SetVertexColor(tint.r, tint.g, tint.b)
+		else
+			texture:SetVertexColor(1, 1, 1)
+		end
+	end
+	texture:SetSize(size, size)
+end
+
+-- A flight master's icon: the game's own art for the node, in colour while
+-- undiscovered, greyed once known.
+function ns.SetFlightIcon(texture, atlas, undiscovered, size)
+	local key = (atlas or "") .. (undiscovered and "+" or "-")
+	if texture.questIcon ~= key then
+		texture.questIcon, texture.questTint = key, nil
+		texture.questComplete, texture.questKind, texture.entrance = nil, nil, nil
+		if not (atlas and texture:SetAtlas(atlas)) and not texture:SetAtlas("FlightMaster") then
+			texture:SetTexture("Interface\\TaxiFrame\\UI-Taxi-Icon-Green")
+		end
+		texture:SetDesaturated(not undiscovered)
+		texture:SetVertexColor(1, 1, 1)
+	end
+	texture:SetSize(size, size)
+end
+
 -- The player's map and its parents up to the continent.
-local function MapChain(mapID)
+function ns.MapChain(mapID)
 	local chain = {}
 	while mapID and #chain < 5 do
 		chain[#chain + 1] = mapID
@@ -198,6 +261,7 @@ end
 
 -- QuestieDB points in world yards, per quest, rebuilt when the quest's
 -- progress changes.
+local MapChain = ns.MapChain
 local spawnCache = {}
 
 local function Progress(questID, complete)
@@ -356,6 +420,7 @@ local ourPick      -- quest we last navigated to
 local manual       -- quest the player picked; held while it is in the log
 local placed       -- our map waypoint: {questID, mapID, x, y, north, west}
 local dismissed = {}  -- quests right-clicked away: skipped by nearest-first until picked again
+local going        -- the place clicked on the compass: {place, mapID, x, y}
 local quietUntil = 0
 
 local function SuperTracked()
@@ -458,6 +523,43 @@ function ns.Choose()
 		end
 	end
 	Navigate(nearest.target.questID)
+end
+
+-- Navigate to a place that is not a quest (a quest giver, a flight master):
+-- a map waypoint of the player's own, so nearest-first leaves it be until a
+-- quest is picked. point: {mapID, x, y, north, west, instance}.
+function ns.GoTo(place, point)
+	local mapID, x, y = point.mapID, point.x, point.y
+	if not C_Map.CanSetUserWaypointOnMap(mapID) then
+		-- A continent's point: the zone under it.
+		local zone = C_Map.GetMapInfoAtPosition(mapID, x, y)
+		local _, pos
+		if zone then
+			_, pos = C_Map.GetMapPosFromWorldPos(point.instance, CreateVector2D(point.north, point.west), zone.mapID)
+		end
+		if not (pos and C_Map.CanSetUserWaypointOnMap(zone.mapID)) then
+			return
+		end
+		mapID, x, y = zone.mapID, pos:GetXY()
+	end
+	manual = nil
+	placed = nil
+	going = { place = place, mapID = mapID, x = x, y = y }
+	C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, x, y))
+	C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+end
+
+-- The place the game navigates to, if it is the one clicked (the waypoint not moved or replaced).
+function ns.CurrentPlace()
+	if not (going and C_SuperTrack.IsSuperTrackingUserWaypoint()) then
+		return nil
+	end
+	local point = C_Map.GetUserWaypoint()
+	local pos = point and point.position
+	if pos and point.uiMapID == going.mapID and math.abs(pos.x - going.x) < 0.002
+		and math.abs(pos.y - going.y) < 0.002 then
+		return going.place
+	end
 end
 
 function ns.Pick(questID)

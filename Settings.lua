@@ -81,6 +81,19 @@ local function CreateSettings()
 		end)
 	Settings.CreateCheckbox(category, minimap, "Show the Quest Beacon button on the minimap.")
 
+	layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Nearby",
+		"Places near you on the compass, besides your tracked quests."))
+	Checkbox("givers", "Quests you can pick up",
+		"A \"!\" on the compass for quest givers near you with a quest you can take. "
+		.. (ns.Questie.Available() and "From QuestieDB." or "Needs the QuestieDB addon, which is not installed."))
+	Slider("giverRange", "Quest givers within", "How near a quest giver must be to show.", 50, 1000, 25, "yd")
+	Checkbox("hideTrivial", "Hide grey quests", "Leave out quests far below your level.")
+	Checkbox("flights", "Flight masters",
+		"Flight masters near you. Ones you have not discovered are in colour and announced; known ones are greyed out.")
+	Slider("flightRange", "Flight masters within", "How near a flight master must be to show.", 50, 1000, 25, "yd")
+	Checkbox("animate", "Announce places coming into range",
+		"A quest giver, or an undiscovered flight master, coming into range pulses twice and sends out a ring.")
+
 	Settings.RegisterAddOnCategory(category)
 end
 

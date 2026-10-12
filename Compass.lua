@@ -1,5 +1,8 @@
 -- A compass bar, at the top of the screen unless moved: cardinal points, and a
 -- pin for each tracked quest at its bearing. Quests behind you sit at the nearer edge.
+-- Quest givers and flight masters in range get pins too (Places.lua); one
+-- coming into range pulses twice and sends out a ring, and if it is outside
+-- the bar's slice it shows at the edge for a few seconds, fading.
 -- It follows the way your character faces, not the camera: while the camera
 -- swings on its own (left button held), it fades.
 
@@ -56,6 +59,8 @@ local centre = bar:CreateTexture(nil, "ARTWORK")
 centre:SetColorTexture(1, 0.82, 0, 0.9)
 centre:SetSize(2, HEIGHT)
 centre:SetPoint("CENTER")
+
+local moving = false   -- unlocked, to drag
 
 -- Shown while unlocked: drag me.
 local unlocked = CreateFrame("Frame", nil, bar)
@@ -121,24 +126,30 @@ local function PlaceHint()
 	end
 end
 
--- One tooltip per quest, nearest first, stacked away from the bar.
+-- Tooltip i for a pin, stacked away from the bar.
+local function PlaceTip(i, pin)
+	local tip = Tip(i)
+	tip:SetOwner(pin, "ANCHOR_NONE")
+	tip:ClearAllPoints()
+	if Low() then
+		if i == 1 then
+			tip:SetPoint("BOTTOM", pin, "TOP", 0, 16)
+		else
+			tip:SetPoint("BOTTOM", tips[i - 1], "TOP", 0, 4)
+		end
+	elseif i == 1 then
+		tip:SetPoint("TOP", pin, "BOTTOM", 0, -16)
+	else
+		tip:SetPoint("TOP", tips[i - 1], "BOTTOM", 0, -4)
+	end
+	return tip
+end
+
+-- One tooltip per quest, nearest first.
 local function ShowTips(pin)
 	HideTips()
 	for i, member in ipairs(pin.members) do
-		local tip = Tip(i)
-		tip:SetOwner(pin, "ANCHOR_NONE")
-		tip:ClearAllPoints()
-		if Low() then
-			if i == 1 then
-				tip:SetPoint("BOTTOM", pin, "TOP", 0, 16)
-			else
-				tip:SetPoint("BOTTOM", tips[i - 1], "TOP", 0, 4)
-			end
-		elseif i == 1 then
-			tip:SetPoint("TOP", pin, "BOTTOM", 0, -16)
-		else
-			tip:SetPoint("TOP", tips[i - 1], "BOTTOM", 0, -4)
-		end
+		local tip = PlaceTip(i, pin)
 		local target = member.target
 		tip:AddLine(target.title, 1, 0.82, 0)
 		if target.detail then
@@ -202,9 +213,139 @@ local function Pin(i)
 	return pin
 end
 
+-- A quest giver or flight master: who, what it offers, how far.
+local function ShowPlaceTip(spot)
+	HideTips()
+	local tip = PlaceTip(1, spot)
+	local place = spot.place
+	tip:AddLine(place.title, 1, 0.82, 0)
+	if place.kind == "giver" then
+		for _, quest in ipairs(place.quests) do
+			local color = ns.Settings().questColors and QuestDifficultyColors[quest.tier] or HIGHLIGHT_FONT_COLOR
+			tip:AddLine(("[%d] %s"):format(quest.level, quest.name), color.r, color.g, color.b)
+		end
+	else
+		tip:AddLine(place.undiscovered and "Flight path not discovered yet" or "Flight path", 1, 1, 1)
+	end
+	tip:AddLine(("%d yd"):format(math.floor(spot.yards)), 0.7, 0.7, 0.7)
+	tip:AddLine("Click: navigate here", 0.5, 0.5, 0.5)
+	tip:Show()
+end
+
+local SPOT_SIZE = 18
+local PULSE = 1      -- s: two pulses
+local RING = 1.2     -- s: the ring spreads out and fades
+local NOTICE = 5     -- s: outside the slice, at the edge this long, fading after HOLD
+local HOLD = 1.5
+
+local spots = {}
+local function Spot(i)
+	local spot = spots[i]
+	if spot then
+		return spot
+	end
+	spot = CreateFrame("Button", nil, bar)
+	spot:SetSize(SPOT_SIZE, SPOT_SIZE)
+	spot.icon = spot:CreateTexture(nil, "ARTWORK")
+	spot.icon:SetPoint("CENTER")
+	spot.ring = spot:CreateTexture(nil, "OVERLAY")
+	spot.ring:SetTexture(ns.RING)
+	spot.ring:SetPoint("CENTER")
+	spot:SetScript("OnClick", function(self)
+		ns.GoTo(self.place, self.point)
+	end)
+	spot:SetScript("OnEnter", ShowPlaceTip)
+	spot:SetScript("OnLeave", HideTips)
+	spots[i] = spot
+	return spot
+end
+
+-- Places in range: inside the slice while in range; outside it only while
+-- just announced, at the edge. One leaving the range or the slice fades out
+-- over FADE rather than vanish.
+local FADE = 0.5
+local fading = {}   -- place key -> {near, alpha, live}
+local lastDraw = 0
+
+local function DrawPlaces(north, west, facing)
+	local now = GetTime()
+	local dt = math.min(now - lastDraw, 0.1)
+	lastDraw = now
+	local animate = ns.Settings().animate
+	for _, near in ipairs(ns.nearby) do
+		local state = fading[near.place.key]
+		if not state then
+			state = { alpha = 0 }
+			fading[near.place.key] = state
+		end
+		state.near, state.live = near, true
+	end
+	local count = 0
+	for key, state in pairs(fading) do
+		local near = state.near
+		local place = near.place
+		local yards, bearing = ns.Measure(near.point, north, west)
+		local x, within = Offset(bearing, facing)
+		local age = near.since > 0 and now - near.since or nil
+		if state.live and (within or (age and age < NOTICE)) then
+			state.alpha = 1
+		else
+			state.alpha = state.alpha - dt / FADE
+		end
+		state.live = false
+		if state.alpha <= 0 then
+			fading[key] = nil
+		else
+			count = count + 1
+			local spot = Spot(count)
+			spot.place, spot.point, spot.yards = place, near.point, yards
+			-- Two pulses on arrival.
+			local scale = 1
+			if animate and age and age < PULSE then
+				scale = 1 + 0.4 * math.abs(math.sin(age / PULSE * 2 * math.pi))
+			end
+			local size = SPOT_SIZE * scale
+			if place.kind == "giver" then
+				ns.SetGiverIcon(spot.icon, place.tier, size)
+			else
+				ns.SetFlightIcon(spot.icon, place.atlas, place.undiscovered, size)
+			end
+			-- The ring: from the icon out to three times its size, fading.
+			if animate and age and age < RING then
+				local t = age / RING
+				local ring = SPOT_SIZE * (1 + 2 * t)
+				spot.ring:SetSize(ring, ring)
+				spot.ring:SetAlpha(0.9 * (1 - t))
+				local color = place.kind == "giver" and place.tier and ns.Settings().questColors
+					and QuestDifficultyColors[place.tier]
+				if color then
+					spot.ring:SetVertexColor(color.r, color.g, color.b)
+				else
+					spot.ring:SetVertexColor(1, 0.82, 0)
+				end
+				spot.ring:Show()
+			else
+				spot.ring:Hide()
+			end
+			local alpha = (place.kind == "flight" and not place.undiscovered) and 0.5 or 1
+			if not within then
+				-- At the edge: held, then fading out by NOTICE.
+				alpha = alpha * (age and math.max(0, math.min(1, 1 - (age - HOLD) / (NOTICE - HOLD))) or 0)
+			end
+			spot:SetAlpha(alpha * state.alpha)
+			spot:SetFrameLevel(bar:GetFrameLevel() + 1)
+			spot:EnableMouse(not moving)
+			PixelUtil.SetPoint(spot, "CENTER", bar, "CENTER", x, 0)
+			spot:Show()
+		end
+	end
+	for i = count + 1, #spots do
+		spots[i]:Hide()
+	end
+end
+
 local entries, groups = {}, {}
 local alpha = 1
-local moving = false
 
 -- Left button held over the world: the camera turns, your character does not.
 -- (With the right button, or both, the character turns too.) IsMouselooking()
@@ -341,6 +482,8 @@ local function Draw(dt)
 			pin.distance:SetPoint("TOP", pin, "CENTER", 0, -(LABEL_TOP + row * LABEL_ROW))
 		end
 	end
+
+	DrawPlaces(north, west, facing)
 end
 
 local elapsed = 0

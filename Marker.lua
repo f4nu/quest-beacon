@@ -88,9 +88,11 @@ updater:SetScript("OnUpdate", function(_, dt)
 		return Off()
 	end
 	local nav = C_Navigation.GetFrame()
-	-- The quest navigated to, by the game's quest navigation or our waypoint.
+	-- The quest navigated to, by the game's quest navigation or our waypoint;
+	-- else a quest giver or flight master clicked on the compass.
 	local questID = ns.CurrentQuest()
-	if not nav or not questID then
+	local place = not questID and ns.CurrentPlace()
+	if not nav or not (questID or place) then
 		return Off()
 	end
 
@@ -98,7 +100,7 @@ updater:SetScript("OnUpdate", function(_, dt)
 	-- point in this instance's space, where it means nothing (the Deeprun Tram,
 	-- quest in Stormwind: 8.6k yd). Same where the game has no map for where you
 	-- are and the quest's place is unknown. Show neither marker.
-	local target = ns.byQuest[questID]
+	local target = questID and ns.byQuest[questID]
 	local elsewhere
 	if target and target.instance then
 		elsewhere = target.instance ~= ns.Instance()
@@ -118,7 +120,14 @@ updater:SetScript("OnUpdate", function(_, dt)
 	end
 
 	local questTitle, complete, objective, kind, tier
-	if target then
+	if place then
+		questTitle = place.title
+		if place.kind == "giver" then
+			objective = place.quests[1].name .. (#place.quests > 1 and (" +" .. (#place.quests - 1)) or "")
+		else
+			objective = place.undiscovered and "Flight path not discovered yet" or "Flight master"
+		end
+	elseif target then
 		questTitle, complete, objective, kind, tier = target.title, target.complete, target.detail, target.kind, target.tier
 	else
 		questTitle, complete, objective = ns.Describe(questID)
@@ -127,7 +136,13 @@ updater:SetScript("OnUpdate", function(_, dt)
 
 	local clamped = C_Navigation.WasClampedToScreen()
 	tick:SetShown(complete == true)
-	ns.SetQuestIcon(icon, complete, kind, 28, 2, tier)
+	if not place then
+		ns.SetQuestIcon(icon, complete, kind, 28, 2, tier)
+	elseif place.kind == "giver" then
+		ns.SetGiverIcon(icon, place.tier, 28)
+	else
+		ns.SetFlightIcon(icon, place.atlas, place.undiscovered, 28)
+	end
 	title:SetText(questTitle)
 	detail:SetText(objective or "")
 	title:SetShown(not clamped)

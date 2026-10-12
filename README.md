@@ -15,7 +15,8 @@ A WoW: Forever addon. No more opening the map to see where to go next.
 - **Nearest first**: navigation switches to the closest quest as you move. Pick one yourself and it sticks until it's done.
 - **Click to go**: click a pin to navigate there. Right-click to skip that quest and go to the next nearest.
 - **Grouping**: quests close together share one pin with a count. Hover for the list, nearest first.
-- **Tells quests apart at a glance**: yellow "?" ready to turn in, dungeon and raid icons, orange and red for hard quests, same colours as the quest tracker.
+- **Tells quests apart at a glance**: yellow "?" ready to turn in, dungeon and raid icons, coloured by level from grey to red like the quest log (can be turned off).
+- **What's nearby**: flight masters, and quest givers with a quest you can take (with QuestieDB), show on the compass when they're close, each kind within its own range. A new one pulses as it comes into range, even behind you. Undiscovered flight masters stand out, known ones are greyed.
 - **Stays out of the way**: fades while you swing the camera, hides on flight paths, sits under the rest of the UI.
 - **Your layout**: move it anywhere, top or bottom, and set its size, width and opacity. Distances and tooltips flip above the bar at the bottom of the screen.
 
@@ -23,11 +24,11 @@ A WoW: Forever addon. No more opening the map to see where to go next.
 
 ## Better with QuestieDB
 
-Install [QuestieDB](https://github.com/Questie/QuestieDB) and pins point at the nearest mob, object or NPC the quest actually needs, not just the game's quest area.
+Install [QuestieDB](https://github.com/Questie/QuestieDB) and pins point at the nearest mob, object or NPC the quest actually needs, not just the game's quest area. It also shows the quest givers near you with a quest you can take.
 
 ## Works with
 
-- QuestieDB (optional, better locations)
+- QuestieDB (optional, better locations and quest givers)
 - Leatrix Plus and other minimap button collectors
 - QuestMaster: also picks the navigated quest, so turn off one of the two world markers
 
