@@ -89,14 +89,26 @@ local function HideTips()
 	end
 end
 
--- One tooltip per quest, nearest first, stacked under the pin.
+-- In the lower half of the screen, distances and tooltips go above the bar.
+local function Low()
+	local _, y = bar:GetCenter()
+	return y and y * bar:GetScale() < UIParent:GetHeight() / 2
+end
+
+-- One tooltip per quest, nearest first, stacked away from the bar.
 local function ShowTips(pin)
 	HideTips()
 	for i, member in ipairs(pin.members) do
 		local tip = Tip(i)
 		tip:SetOwner(pin, "ANCHOR_NONE")
 		tip:ClearAllPoints()
-		if i == 1 then
+		if Low() then
+			if i == 1 then
+				tip:SetPoint("BOTTOM", pin, "TOP", 0, 16)
+			else
+				tip:SetPoint("BOTTOM", tips[i - 1], "TOP", 0, 4)
+			end
+		elseif i == 1 then
 			tip:SetPoint("TOP", pin, "BOTTOM", 0, -16)
 		else
 			tip:SetPoint("TOP", tips[i - 1], "BOTTOM", 0, -4)
@@ -273,6 +285,7 @@ local function Draw(dt)
 	-- Labels left to right: one that would touch its left neighbour takes the
 	-- other row, so colliding labels alternate upper, lower, upper.
 	local previousRight, previousRow
+	local low = Low()
 	for i = 1, #groups do
 		local pin = pins[i]
 		local width = pin.distance:GetStringWidth() or 0
@@ -284,7 +297,11 @@ local function Draw(dt)
 			previousRight, previousRow = pin.x + width / 2, row
 		end
 		pin.distance:ClearAllPoints()
-		pin.distance:SetPoint("TOP", pin, "CENTER", 0, -(LABEL_TOP + row * LABEL_ROW))
+		if low then
+			pin.distance:SetPoint("BOTTOM", pin, "CENTER", 0, LABEL_TOP + row * LABEL_ROW)
+		else
+			pin.distance:SetPoint("TOP", pin, "CENTER", 0, -(LABEL_TOP + row * LABEL_ROW))
+		end
 	end
 end
 
