@@ -54,6 +54,7 @@ local function CreateSettings()
 		"The compass fades out while you fly a flight path, and comes back when you land.")
 	Slider("compassWidth", "Compass width", "Width of the compass bar.", 300, 1200, 20)
 	Slider("compassScale", "Compass size", "Size of the whole compass: bar, pins and text.", 50, 150, 5, "%")
+	Slider("compassOpacity", "Compass opacity", "How see-through the whole compass is.", 20, 100, 5, "%")
 
 	local unlock = Settings.RegisterProxySetting(category, "QuestBeacon_unlock", "boolean", "Unlock the compass", false,
 		ns.CompassUnlocked, ns.SetCompassUnlocked)

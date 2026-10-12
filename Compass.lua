@@ -224,7 +224,7 @@ local function Draw(dt)
 	local north, west, instance = ns.PlayerPosition()
 	if not facing or not north then
 		alpha = moving and 1 or 0
-		bar:SetAlpha(alpha)
+		bar:SetAlpha(alpha * ns.Settings().compassOpacity / 100)
 		return
 	end
 	-- Ease towards the wanted alpha rather than blink.
@@ -237,7 +237,7 @@ local function Draw(dt)
 		want = CAMERA_ALPHA
 	end
 	alpha = alpha + (want - alpha) * math.min(1, dt * 12)
-	bar:SetAlpha(alpha)
+	bar:SetAlpha(alpha * ns.Settings().compassOpacity / 100)
 	local merge = ns.Settings().merge
 
 	for _, label in ipairs(cardinals) do
