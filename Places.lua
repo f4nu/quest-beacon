@@ -6,8 +6,11 @@
 local _, ns = ...
 
 -- In range now: {place, point, since}. since: when it came into range and was
--- announced, else 0.
+-- announced, else 0. The player's own map pin is there too, whatever the range.
 ns.nearby = {}
+
+local pin = { key = "pin", kind = "pin", title = "Map pin", always = true, points = { {} } }
+ns.pin = pin
 
 local available    -- the last scan: quests you could pick up, or nil
 local givers = {}  -- "npc:<id>" or "object:<id>" -> {key, kind = "giver", title, points, quests, shown, tier}
@@ -173,6 +176,21 @@ local function Tick()
 					since[place.key] = announce and now >= quietUntil and now or 0
 				end
 				ns.nearby[#ns.nearby + 1] = { place = place, point = point, since = since[place.key] }
+			end
+		end
+		if ns.PlayersPin() then
+			local waypoint = C_Map.GetUserWaypoint()
+			local pos = waypoint and waypoint.position
+			local pinNorth, pinWest, instance
+			if pos then
+				pinNorth, pinWest, instance = ns.ToWorld(waypoint.uiMapID, pos.x, pos.y)
+			end
+			if pinNorth and instance == here then
+				local point = pin.points[1]
+				point.north, point.west, point.instance = pinNorth, pinWest, instance
+				point.mapID, point.x, point.y = waypoint.uiMapID, pos.x, pos.y
+				seen[pin.key] = true
+				ns.nearby[#ns.nearby + 1] = { place = pin, point = point, since = 0 }
 			end
 		end
 		if settings.givers then

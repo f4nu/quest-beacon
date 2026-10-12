@@ -229,6 +229,21 @@ function ns.SetGiverIcon(texture, tier, size)
 	texture:SetSize(size, size)
 end
 
+-- The player's map pin: the game's own pin art, bright while navigated to.
+function ns.SetPinIcon(texture, size, tracked)
+	local key = tracked and "pin+" or "pin-"
+	if texture.questIcon ~= key then
+		texture.questIcon, texture.questTint = key, nil
+		texture.questComplete, texture.questKind, texture.entrance = nil, nil, nil
+		if not texture:SetAtlas(tracked and "Waypoint-MapPin-Tracked" or "Waypoint-MapPin-Untracked") then
+			texture:SetTexture(ns.ICON)
+		end
+		texture:SetDesaturated(false)
+		texture:SetVertexColor(1, 1, 1)
+	end
+	texture:SetSize(size, size)
+end
+
 -- A flight master's icon: the game's own art for the node, in colour while
 -- undiscovered, greyed once known.
 function ns.SetFlightIcon(texture, atlas, undiscovered, size)
@@ -430,16 +445,25 @@ local function SuperTracked()
 	end
 end
 
+-- Is the map's waypoint the one we put down at spot {mapID, x, y}?
+local function IsOurs(spot)
+	local point = spot and C_Map.GetUserWaypoint()
+	local pos = point and point.position
+	return pos ~= nil and point.uiMapID == spot.mapID
+		and math.abs(pos.x - spot.x) < 0.002 and math.abs(pos.y - spot.y) < 0.002
+end
+
 -- Is the game navigating to the waypoint we put down (and not one the player moved)?
 local function OnOurWaypoint()
-	if not (placed and C_SuperTrack.IsSuperTrackingUserWaypoint()) then
-		return false
-	end
-	local point = C_Map.GetUserWaypoint()
-	local pos = point and point.position
-	return pos ~= nil and point.uiMapID == placed.mapID
-		and math.abs(pos.x - placed.x) < 0.002 and math.abs(pos.y - placed.y) < 0.002
+	return C_SuperTrack.IsSuperTrackingUserWaypoint() and IsOurs(placed)
 end
+
+-- A map pin the player put down (Ctrl+click on the map). There is room for
+-- one only: while it stands, ours never replaces it.
+local function PlayersPin()
+	return C_Map.HasUserWaypoint() and not IsOurs(placed) and not IsOurs(going)
+end
+ns.PlayersPin = PlayersPin
 
 -- The quest the game is navigating to, by quest or by our waypoint.
 function ns.CurrentQuest()
@@ -463,7 +487,7 @@ end
 local function Navigate(questID)
 	ourPick = questID
 	local target = ns.byQuest[questID]
-	if target and target.spawn and target.mapID and C_Map.CanSetUserWaypointOnMap(target.mapID) then
+	if target and target.spawn and target.mapID and C_Map.CanSetUserWaypointOnMap(target.mapID) and not PlayersPin() then
 		-- Move the waypoint only when the nearest spawn moved, not on every tick.
 		local same = placed and placed.questID == questID and OnOurWaypoint()
 			and ns.Measure(target, placed.north, placed.west) < 20
@@ -529,6 +553,11 @@ end
 -- a map waypoint of the player's own, so nearest-first leaves it be until a
 -- quest is picked. point: {mapID, x, y, north, west, instance}.
 function ns.GoTo(place, point)
+	-- The player's own pin: just navigate to it.
+	if place.kind == "pin" then
+		C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+		return
+	end
 	local mapID, x, y = point.mapID, point.x, point.y
 	if not C_Map.CanSetUserWaypointOnMap(mapID) then
 		-- A continent's point: the zone under it.
@@ -550,15 +579,16 @@ function ns.GoTo(place, point)
 end
 
 -- The place the game navigates to, if it is the one clicked (the waypoint not moved or replaced).
+-- Or the player's own map pin, when navigating to it.
 function ns.CurrentPlace()
-	if not (going and C_SuperTrack.IsSuperTrackingUserWaypoint()) then
+	if not C_SuperTrack.IsSuperTrackingUserWaypoint() then
 		return nil
 	end
-	local point = C_Map.GetUserWaypoint()
-	local pos = point and point.position
-	if pos and point.uiMapID == going.mapID and math.abs(pos.x - going.x) < 0.002
-		and math.abs(pos.y - going.y) < 0.002 then
+	if IsOurs(going) then
 		return going.place
+	end
+	if PlayersPin() then
+		return ns.pin
 	end
 end
 
@@ -628,10 +658,26 @@ function ns.Soon()
 	end
 end
 
+-- The player put a pin on the map: that is where they want to go. Navigate
+-- to it; nearest-first stands aside while it is super-tracked (see Choose),
+-- and takes over again once it is reached or removed.
+local function OnWaypointChanged()
+	if PlayersPin() then
+		placed, going = nil, nil
+		if not C_SuperTrack.IsSuperTrackingUserWaypoint() then
+			C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+		end
+	end
+end
+
 local events = CreateFrame("Frame")
 events:SetScript("OnEvent", function(_, event)
 	if event == "SUPER_TRACKING_CHANGED" then
 		OnSuperTrackingChanged()
+		return
+	end
+	if event == "USER_WAYPOINT_UPDATED" then
+		OnWaypointChanged()
 		return
 	end
 	if event == "PLAYER_ENTERING_WORLD" then
@@ -656,6 +702,8 @@ EventUtil.ContinueOnAddOnLoaded(ADDON, function()
 		"ZONE_CHANGED", "ZONE_CHANGED_INDOORS", "ZONE_CHANGED_NEW_AREA", "SUPER_TRACKING_CHANGED" }) do
 		events:RegisterEvent(event)
 	end
+	-- Not every client has it; without it a pin is still never replaced, just not navigated to.
+	pcall(events.RegisterEvent, events, "USER_WAYPOINT_UPDATED")
 	-- Quest spots move as objectives progress, and the nearest changes as you move.
 	C_Timer.NewTicker(1, Update)
 	for _, setup in ipairs(ns.onLoad) do

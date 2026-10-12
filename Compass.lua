@@ -213,13 +213,15 @@ local function Pin(i)
 	return pin
 end
 
--- A quest giver or flight master: who, what it offers, how far.
+-- A quest giver, flight master or the player's map pin: who, what it offers, how far.
 local function ShowPlaceTip(spot)
 	HideTips()
 	local tip = PlaceTip(1, spot)
 	local place = spot.place
 	tip:AddLine(place.title, 1, 0.82, 0)
-	if place.kind == "giver" then
+	if place.kind == "pin" then
+		-- Its title says it all.
+	elseif place.kind == "giver" then
 		for _, quest in ipairs(place.quests) do
 			local color = ns.Settings().questColors and QuestDifficultyColors[quest.tier] or HIGHLIGHT_FONT_COLOR
 			tip:AddLine(("[%d] %s"):format(quest.level, quest.name), color.r, color.g, color.b)
@@ -261,7 +263,7 @@ local function Spot(i)
 end
 
 -- Places in range: inside the slice while in range; outside it only while
--- just announced, at the edge. One leaving the range or the slice fades out
+-- just announced, at the edge (the player's map pin: always). One leaving the range or the slice fades out
 -- over FADE rather than vanish.
 local FADE = 0.5
 local fading = {}   -- place key -> {near, alpha, live}
@@ -287,7 +289,7 @@ local function DrawPlaces(north, west, facing)
 		local yards, bearing = ns.Measure(near.point, north, west)
 		local x, within = Offset(bearing, facing)
 		local age = near.since > 0 and now - near.since or nil
-		if state.live and (within or (age and age < NOTICE)) then
+		if state.live and (within or place.always or (age and age < NOTICE)) then
 			state.alpha = 1
 		else
 			state.alpha = state.alpha - dt / FADE
@@ -305,7 +307,9 @@ local function DrawPlaces(north, west, facing)
 				scale = 1 + 0.4 * math.abs(math.sin(age / PULSE * 2 * math.pi))
 			end
 			local size = SPOT_SIZE * scale
-			if place.kind == "giver" then
+			if place.kind == "pin" then
+				ns.SetPinIcon(spot.icon, size, C_SuperTrack.IsSuperTrackingUserWaypoint())
+			elseif place.kind == "giver" then
 				ns.SetGiverIcon(spot.icon, place.tier, size)
 			else
 				ns.SetFlightIcon(spot.icon, place.atlas, place.undiscovered, size)
@@ -328,12 +332,15 @@ local function DrawPlaces(north, west, facing)
 				spot.ring:Hide()
 			end
 			local alpha = (place.kind == "flight" and not place.undiscovered) and 0.5 or 1
-			if not within then
+			if not within and place.always then
+				alpha = 0.45   -- at the edge, like a quest behind you
+			elseif not within then
 				-- At the edge: held, then fading out by NOTICE.
 				alpha = alpha * (age and math.max(0, math.min(1, 1 - (age - HOLD) / (NOTICE - HOLD))) or 0)
 			end
 			spot:SetAlpha(alpha * state.alpha)
-			spot:SetFrameLevel(bar:GetFrameLevel() + 1)
+			-- The player's own pin over any place it was dropped on.
+			spot:SetFrameLevel(bar:GetFrameLevel() + (place.kind == "pin" and 2 or 1))
 			spot:EnableMouse(not moving)
 			PixelUtil.SetPoint(spot, "CENTER", bar, "CENTER", x, 0)
 			spot:Show()

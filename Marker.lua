@@ -122,7 +122,9 @@ updater:SetScript("OnUpdate", function(_, dt)
 	local questTitle, complete, objective, kind, tier
 	if place then
 		questTitle = place.title
-		if place.kind == "giver" then
+		if place.kind == "pin" then
+			objective = nil
+		elseif place.kind == "giver" then
 			objective = place.quests[1].name .. (#place.quests > 1 and (" +" .. (#place.quests - 1)) or "")
 		else
 			objective = place.undiscovered and "Flight path not discovered yet" or "Flight master"
@@ -138,6 +140,8 @@ updater:SetScript("OnUpdate", function(_, dt)
 	tick:SetShown(complete == true)
 	if not place then
 		ns.SetQuestIcon(icon, complete, kind, 28, 2, tier)
+	elseif place.kind == "pin" then
+		ns.SetPinIcon(icon, 28, true)
 	elseif place.kind == "giver" then
 		ns.SetGiverIcon(icon, place.tier, 28)
 	else
