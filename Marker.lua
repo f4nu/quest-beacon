@@ -75,15 +75,15 @@ local function Off()
 end
 
 local anchoredTo
-local updater = CreateFrame("Frame")
-local elapsed = 0
-updater:SetScript("OnUpdate", function(_, dt)
-	elapsed = elapsed + dt
-	if elapsed < 0.03 then
-		return
-	end
-	elapsed = 0
+-- A new target: the game may move its point a frame before or after we see
+-- the change, so the marker stays hidden a couple of frames while its text,
+-- icon and anchor catch up, rather than show the old text in the new place.
+local shownFor          -- quest ID or place key the marker shows
+local HIDE_FRAMES = 2
+local hiding = 0
 
+local updater = CreateFrame("Frame")
+updater:SetScript("OnUpdate", function()
 	if not ns.Settings().marker then
 		return Off()
 	end
@@ -93,7 +93,13 @@ updater:SetScript("OnUpdate", function(_, dt)
 	local questID = ns.CurrentQuest()
 	local place = not questID and ns.CurrentPlace()
 	if not nav or not (questID or place) then
+		shownFor = nil
 		return Off()
+	end
+	local key = questID or place.key
+	if key ~= shownFor then
+		shownFor = key
+		hiding = HIDE_FRAMES
 	end
 
 	-- A quest in another instance: the game still navigates to it, but draws the
@@ -160,6 +166,10 @@ updater:SetScript("OnUpdate", function(_, dt)
 	distance:SetText(yards and yards > 0 and (ns.Yards(yards) .. " yd") or "")
 	-- Fade out on arrival rather than sit on top of the target.
 	marker:SetAlpha(yards and yards < 15 and math.max(0.25, yards / 15) or 1)
+	if hiding > 0 then
+		hiding = hiding - 1
+		marker:SetAlpha(0)
+	end
 
 	marker:Show()
 	SetGameMarkerHidden(true)
