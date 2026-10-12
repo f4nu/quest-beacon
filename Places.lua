@@ -16,6 +16,8 @@ local available    -- the last scan: quests you could pick up, or nil
 local givers = {}  -- "npc:<id>" or "object:<id>" -> {key, kind = "giver", title, points, quests, shown, tier}
 local flights = {} -- "taxi:<node>" -> {key, kind = "flight", title, atlas, undiscovered, points}
 
+local notes = {}   -- "note:<map>:<coord>" -> {key, kind = "note", title, desc, icon, points}
+
 local LETTER = { Alliance = "A", Horde = "H" }
 
 -- A starter's spawns in world yards. Spawns do not move: kept for good.
@@ -142,6 +144,42 @@ local function RefreshFlights()
 	end
 end
 
+-- Notes the player put on the map with HandyNotes (Alt+right-click), read
+-- from its own store: map ID -> coordinate -> {title, desc, icon}.
+local function HandyNotesModule()
+	local addons = LibStub and LibStub("AceAddon-3.0", true)
+	local handyNotes = addons and addons:GetAddon("HandyNotes", true)
+	return handyNotes and handyNotes:GetModule("HandyNotes", true)
+end
+
+local function RefreshNotes()
+	wipe(notes)
+	local module = HandyNotesModule()
+	local maps = module and module.db and module.db.global
+	if type(maps) ~= "table" then
+		return
+	end
+	for mapID, list in pairs(maps) do
+		if type(mapID) == "number" and type(list) == "table" then
+			for coord, note in pairs(list) do
+				if type(coord) == "number" and type(note) == "table" then
+					-- HandyNotes packs a spot as XXXXYYYY, in ten-thousandths.
+					local x, y = math.floor(coord / 10000) / 10000, (coord % 10000) / 10000
+					local north, west, instance = ns.ToWorld(mapID, x, y)
+					if north then
+						local key = "note:" .. mapID .. ":" .. coord
+						notes[key] = { key = key, kind = "note",
+							title = (note.title and note.title ~= "") and note.title or "Note",
+							desc = (note.desc and note.desc ~= "") and note.desc or nil,
+							icon = module.icons and module.icons[note.icon],
+							points = { { north = north, west = west, instance = instance, mapID = mapID, x = x, y = y } } }
+					end
+				end
+			end
+		end
+	end
+end
+
 -- What is in range, and when each came into range. Nothing is announced for
 -- a while after a loading screen: what is around you then was already there.
 local since = {}
@@ -203,6 +241,11 @@ local function Tick()
 				Consider(flight, settings.flightRange, flight.undiscovered)
 			end
 		end
+		if settings.notes then
+			for _, note in pairs(notes) do
+				Consider(note, settings.noteRange, false)
+			end
+		end
 	end
 	for key in pairs(since) do
 		if not seen[key] then
@@ -235,6 +278,9 @@ table.insert(ns.onLoad, function()
 	C_Timer.NewTicker(0.25, Tick)
 	-- A flight path learned without opening the map, a node crossed into: a slow sweep.
 	C_Timer.NewTicker(10, RefreshFlights)
+	-- Notes added, edited or deleted: HandyNotes tells only its own kind, so look again now and then.
+	RefreshNotes()
+	C_Timer.NewTicker(2, RefreshNotes)
 end)
 
 -- Settings: givers switched on want a scan; hiding grey quests, a rebuild.

@@ -221,6 +221,10 @@ local function ShowPlaceTip(spot)
 	tip:AddLine(place.title, 1, 0.82, 0)
 	if place.kind == "pin" then
 		-- Its title says it all.
+	elseif place.kind == "note" then
+		if place.desc then
+			tip:AddLine(place.desc, 1, 1, 1, true)
+		end
 	elseif place.kind == "giver" then
 		for _, quest in ipairs(place.quests) do
 			local color = ns.Settings().questColors and QuestDifficultyColors[quest.tier] or HIGHLIGHT_FONT_COLOR
@@ -309,6 +313,8 @@ local function DrawPlaces(north, west, facing)
 			local size = SPOT_SIZE * scale
 			if place.kind == "pin" then
 				ns.SetPinIcon(spot.icon, size, C_SuperTrack.IsSuperTrackingUserWaypoint())
+			elseif place.kind == "note" then
+				ns.SetNoteIcon(spot.icon, place.icon, size)
 			elseif place.kind == "giver" then
 				ns.SetGiverIcon(spot.icon, place.tier, size)
 			else

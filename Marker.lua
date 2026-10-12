@@ -124,6 +124,8 @@ updater:SetScript("OnUpdate", function(_, dt)
 		questTitle = place.title
 		if place.kind == "pin" then
 			objective = nil
+		elseif place.kind == "note" then
+			objective = place.desc
 		elseif place.kind == "giver" then
 			objective = place.quests[1].name .. (#place.quests > 1 and (" +" .. (#place.quests - 1)) or "")
 		else
@@ -142,6 +144,8 @@ updater:SetScript("OnUpdate", function(_, dt)
 		ns.SetQuestIcon(icon, complete, kind, 28, 2, tier)
 	elseif place.kind == "pin" then
 		ns.SetPinIcon(icon, 28, true)
+	elseif place.kind == "note" then
+		ns.SetNoteIcon(icon, place.icon, 28 * 0.7)
 	elseif place.kind == "giver" then
 		ns.SetGiverIcon(icon, place.tier, 28)
 	else

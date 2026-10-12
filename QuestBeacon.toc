@@ -4,7 +4,7 @@
 ## Author: Fanu
 ## Version: @project-version@
 ## IconTexture: Interface\AddOns\QuestBeacon\Media\icon
-## OptionalDeps: QuestieDB
+## OptionalDeps: QuestieDB, HandyNotes
 ## X-Curse-Project-ID: 1731988
 ## SavedVariables: QuestBeaconDB
 

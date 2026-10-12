@@ -25,6 +25,8 @@ local DEFAULTS = {
 	hideTrivial = true,
 	flights = true,
 	flightRange = 500,   -- yards
+	notes = true,
+	noteRange = 1000,   -- yards
 	animate = true,
 	merge = 26,
 }
@@ -172,6 +174,7 @@ function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, tier)
 	if texture.questComplete ~= complete or texture.questKind ~= kind or texture.questTint ~= tint
 		or texture.questIcon ~= "quest" then
 		texture.questComplete, texture.questKind, texture.questTint, texture.questIcon = complete, kind, tint, "quest"
+		texture:SetTexCoord(0, 1, 0, 1)   -- a note's crop does not go with a new atlas
 		texture.entrance = kind ~= nil and texture:SetAtlas(ATLAS[kind])
 		if texture.entrance then
 			texture:SetDesaturated(false)
@@ -215,6 +218,7 @@ function ns.SetGiverIcon(texture, tier, size)
 	local tint = TierColor(tier)
 	if texture.questTint ~= tint or texture.questIcon ~= "giver" then
 		texture.questTint, texture.questIcon = tint, "giver"
+		texture:SetTexCoord(0, 1, 0, 1)
 		texture.questComplete, texture.questKind, texture.entrance = nil, nil, nil
 		if not texture:SetAtlas("QuestNormal") then
 			texture:SetTexture("Interface\\GossipFrame\\AvailableQuestIcon")
@@ -235,11 +239,30 @@ function ns.SetPinIcon(texture, size, tracked)
 	if texture.questIcon ~= key then
 		texture.questIcon, texture.questTint = key, nil
 		texture.questComplete, texture.questKind, texture.entrance = nil, nil, nil
+		texture:SetTexCoord(0, 1, 0, 1)
 		if not texture:SetAtlas(tracked and "Waypoint-MapPin-Tracked" or "Waypoint-MapPin-Untracked") then
 			texture:SetTexture(ns.ICON)
 		end
 		texture:SetDesaturated(false)
 		texture:SetVertexColor(1, 1, 1)
+	end
+	texture:SetSize(size, size)
+end
+
+-- A HandyNotes note: the icon picked for it in HandyNotes ({icon, tCoord*, r, g, b}).
+function ns.SetNoteIcon(texture, info, size)
+	local key = "note" .. tostring(info)
+	if texture.questIcon ~= key then
+		texture.questIcon, texture.questTint = key, nil
+		texture.questComplete, texture.questKind, texture.entrance = nil, nil, nil
+		texture:SetTexture(info and info.icon or ns.ICON)
+		if info and info.tCoordLeft then
+			texture:SetTexCoord(info.tCoordLeft, info.tCoordRight, info.tCoordTop, info.tCoordBottom)
+		else
+			texture:SetTexCoord(0, 1, 0, 1)
+		end
+		texture:SetDesaturated(false)
+		texture:SetVertexColor(info and info.r or 1, info and info.g or 1, info and info.b or 1)
 	end
 	texture:SetSize(size, size)
 end
@@ -251,6 +274,7 @@ function ns.SetFlightIcon(texture, atlas, undiscovered, size)
 	if texture.questIcon ~= key then
 		texture.questIcon, texture.questTint = key, nil
 		texture.questComplete, texture.questKind, texture.entrance = nil, nil, nil
+		texture:SetTexCoord(0, 1, 0, 1)
 		if not (atlas and texture:SetAtlas(atlas)) and not texture:SetAtlas("FlightMaster") then
 			texture:SetTexture("Interface\\TaxiFrame\\UI-Taxi-Icon-Green")
 		end

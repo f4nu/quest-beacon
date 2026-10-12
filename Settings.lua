@@ -91,6 +91,11 @@ local function CreateSettings()
 	Checkbox("flights", "Flight masters",
 		"Flight masters near you. Ones you have not discovered are in colour and announced; known ones are greyed out.")
 	Slider("flightRange", "Flight masters within", "How near a flight master must be to show.", 50, 1000, 25, "yd")
+	Checkbox("notes", "HandyNotes notes",
+		"Your own notes from the HandyNotes addon (Alt+right-click on the map). "
+		.. (LibStub("AceAddon-3.0", true) and LibStub("AceAddon-3.0"):GetAddon("HandyNotes", true)
+			and "HandyNotes is installed." or "Needs the HandyNotes addon, which is not installed."))
+	Slider("noteRange", "Notes within", "How near a note must be to show.", 100, 5000, 100, "yd")
 	Checkbox("animate", "Announce places coming into range",
 		"A quest giver, or an undiscovered flight master, coming into range pulses twice and sends out a ring.")
 
