@@ -135,9 +135,10 @@ end
 -- A quest's icon: ready for turn-in, the map-pin "?"; a dungeon or raid quest
 -- still to do, its entrance icon in colour; any other quest still to do, the
 -- "?" in its tier's colour when the caller gives one and colours are on, else grey.
--- The old gossip icon if a client lacks the art. The entrance art is mostly
+-- Older art if a client lacks the map pin's. The entrance art is mostly
 -- glow, so it is drawn larger than the "?", by entranceScale.
 local ATLAS = { dungeon = "Dungeon", raid = "Raid" }
+local PIN_SCALE = 0.7
 
 function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, tier)
 	kind = not complete and kind or nil
@@ -148,7 +149,9 @@ function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, tier)
 		if texture.entrance then
 			texture:SetDesaturated(false)
 		else
-			if not texture:SetAtlas("UI-QuestIcon-TurnIn-Normal") then
+			-- The map pin "?", twin of the "!"; the older art where a client lacks it.
+			texture.pin = texture:SetAtlas("QuestTurnin")
+			if not texture.pin and not texture:SetAtlas("UI-QuestIcon-TurnIn-Normal") then
 				texture:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon")
 			end
 			texture:SetDesaturated(not complete)
@@ -160,8 +163,23 @@ function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, tier)
 			texture:SetVertexColor(1, 1, 1)
 		end
 	end
-	size = size * (texture.entrance and entranceScale or 1)
+	-- The map pin "?" fills more of its square than the older art: drawn smaller to match.
+	size = size * (texture.entrance and entranceScale or texture.pin and PIN_SCALE or 1)
 	texture:SetSize(size, size)
+end
+
+-- A green tick on a quest ready for turn-in, so its "?" never reads as a quest
+-- still to do at your level, which is yellow too. Hung bottom right of the icon.
+function ns.CreateTick(parent, icon, size, x, y)
+	local tick = parent:CreateTexture(nil, "OVERLAY", nil, 2)
+	-- The quest tracker's own check for a finished objective.
+	if not tick:SetAtlas("ui-questtracker-tracker-check") and not tick:SetAtlas("common-icon-checkmark") then
+		tick:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+	end
+	tick:SetSize(size, size)
+	tick:SetPoint("CENTER", icon, "CENTER", x, y)
+	tick:Hide()
+	return tick
 end
 
 -- The player's map and its parents up to the continent.

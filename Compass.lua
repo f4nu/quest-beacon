@@ -165,6 +165,7 @@ local function Pin(i)
 	-- middle line: they stay at one height whatever size the icon is.
 	pin.distance = pin:CreateFontString(nil, "OVERLAY")
 	pin.distance:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+	pin.tick = ns.CreateTick(pin, pin, 9, 4, -3)
 	pin.badge = pin:CreateTexture(nil, "ARTWORK", nil, 1)
 	pin.badge:SetTexture(ns.CIRCLE)
 	pin.badge:SetVertexColor(0, 0, 0, 0.85)
@@ -272,8 +273,14 @@ local function Draw(dt)
 	local superTracked = ns.CurrentQuest()
 	for i, members in ipairs(groups) do
 		table.sort(members, function(a, b) return a.yards < b.yards end)
-		-- The pin looks like its nearest quest.
+		-- The pin looks like its nearest quest ready for turn-in, else its nearest.
 		local nearest = members[1].target
+		for _, member in ipairs(members) do
+			if member.target.complete then
+				nearest = member.target
+				break
+			end
+		end
 		local x, current = 0, false
 		for _, member in ipairs(members) do
 			x = x + member.x
@@ -292,6 +299,7 @@ local function Draw(dt)
 		pin:SetAlpha(within and 1 or 0.45)
 		pin:EnableMouse(not moving)   -- unlocked, a drag on a pin moves the bar
 		pin.badge:SetShown(many)
+		pin.tick:SetShown(nearest.complete)
 		pin.count:SetShown(many)
 		pin.count:SetText(#members)
 		local badge = #members >= 10 and 17 or 14
