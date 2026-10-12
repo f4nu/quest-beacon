@@ -15,6 +15,7 @@ No more opening the map to see where to go next.
 - **Grouping**: quests close together share one pin with a count. Hover for the list, nearest first.
 - **Tells quests apart at a glance**: yellow "?" ready to turn in, dungeon and raid icons, orange and red for hard quests, same colours as the quest tracker.
 - **Stays out of the way**: fades while you swing the camera, hides on flight paths, sits under the rest of the UI.
+- **Your layout**: move it anywhere, top or bottom, and set its size, width and opacity. Distances and tooltips flip above the bar at the bottom of the screen.
 
 ![World marker](https://raw.githubusercontent.com/f4nu/quest-beacon/main/screenshots/compass_2.jpg)
 
@@ -36,7 +37,7 @@ Nothing to set up. To change things: `/qb`, the minimap button, or Options → A
 |---|---|
 | `/qb` | settings |
 | `/qb next` | next quest by distance (also a key binding) |
-| `/qb move` | unlock the compass to drag it |
+| `/qb move` | unlock the compass to drag it (also in the settings) |
 | `/qb compass` / `marker` / `auto` | toggle compass, world marker, nearest first |
 | `/qb why` | where each quest is believed to be |
 
