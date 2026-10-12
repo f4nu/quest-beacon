@@ -28,7 +28,6 @@ end
 
 local bar = CreateFrame("Frame", "QuestBeaconCompass", UIParent)
 bar:SetSize(WIDTH, HEIGHT)
-bar:SetPoint("TOP", UIParent, "TOP", 0, -14)
 bar:SetFrameStrata("LOW")
 bar:SetClampedToScreen(true)
 bar:SetMovable(true)
@@ -314,15 +313,26 @@ bar:SetScript("OnUpdate", function(_, dt)
 	end
 end)
 
-local function Apply()
+-- The saved position is the bar's centre from the screen's bottom left, in
+-- UIParent units, so scaling keeps it in place. (1.0 saved any point at
+-- scale 1; those still load.) None saved: top centre.
+local function Place()
 	local settings = ns.Settings()
-	if settings.compassPoint then
-		local p = settings.compassPoint
-		bar:ClearAllPoints()
-		bar:SetPoint(p[1], UIParent, p[2], p[3], p[4])
+	local scale = settings.compassScale / 100
+	bar:SetScale(scale)
+	bar:ClearAllPoints()
+	local p = settings.compassPoint
+	if p then
+		bar:SetPoint(p[1], UIParent, p[2], p[3] / scale, p[4] / scale)
+	else
+		bar:SetPoint("TOP", UIParent, "TOP", 0, -14 / scale)
 	end
-	Resize(settings.compassWidth)
-	bar:SetShown(settings.compass)
+end
+
+local function Apply()
+	Place()
+	Resize(ns.Settings().compassWidth)
+	bar:SetShown(ns.Settings().compass)
 end
 
 -- Drag mode: /qb move to unlock, again to lock.
@@ -330,8 +340,10 @@ local moving = false
 bar:SetScript("OnDragStart", bar.StartMoving)
 bar:SetScript("OnDragStop", function(self)
 	self:StopMovingOrSizing()
-	local point, _, relativePoint, x, y = self:GetPoint()
-	QuestBeaconDB.compassPoint = { point, relativePoint, x, y }
+	local x, y = self:GetCenter()
+	local scale = self:GetScale()
+	QuestBeaconDB.compassPoint = { "CENTER", "BOTTOMLEFT", x * scale, y * scale }
+	Place()
 end)
 
 function ns.ToggleMove()

@@ -17,6 +17,7 @@ local DEFAULTS = {
 	cameraFade = true,
 	taxiFade = true,
 	compassWidth = 560,
+	compassScale = 100,   -- percent
 	merge = 26,
 }
 ns.DEFAULTS = DEFAULTS

@@ -24,13 +24,13 @@ local function Checkbox(key, name, tooltip)
 	Settings.CreateCheckbox(category, setting, tooltip)
 end
 
-local function Slider(key, name, tooltip, low, high, step)
+local function Slider(key, name, tooltip, low, high, step, unit)
 	local setting = Settings.RegisterAddOnSetting(category, "QuestBeacon_" .. key, key, QuestBeaconDB,
 		type(ns.DEFAULTS[key]), name, ns.DEFAULTS[key])
 	setting:SetValueChangedCallback(ns.OnSettingsChanged)
 	local options = Settings.CreateSliderOptions(low, high, step)
 	options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
-		return ("%d px"):format(math.floor(value))
+		return ("%d %s"):format(math.floor(value), unit or "px")
 	end)
 	Settings.CreateSlider(category, setting, options, tooltip)
 end
@@ -53,6 +53,7 @@ local function CreateSettings()
 	Checkbox("taxiFade", "Hide the compass on flight paths",
 		"The compass fades out while you fly a flight path, and comes back when you land.")
 	Slider("compassWidth", "Compass width", "Width of the compass bar.", 300, 1200, 20)
+	Slider("compassScale", "Compass size", "Size of the whole compass: bar, pins and text.", 50, 150, 5, "%")
 	Slider("merge", "Group quests closer than",
 		"Quests closer than this on the compass share one pin, with a count.", 10, 60, 2)
 
