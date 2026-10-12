@@ -6,7 +6,7 @@
 
 local ADDON, ns = ...
 
-local category
+local category, layout
 
 -- Where the minimap icon's centre goes, from the button's centre.
 local MINIMAP_ICON_OFFSET_X, MINIMAP_ICON_OFFSET_Y = 1.5, -1
@@ -38,9 +38,9 @@ end
 local icon = LibStub("LibDBIcon-1.0")
 
 local function CreateSettings()
-	category = Settings.RegisterVerticalLayoutCategory("Quest Beacon")
+	category, layout = Settings.RegisterVerticalLayoutCategory("Quest Beacon")
 
-	Checkbox("compass", "Compass", "A bar at the top of the screen with a pin for every tracked quest.")
+	Checkbox("compass", "Compass", "A bar with a pin for every tracked quest. At the top of the screen unless you move it.")
 	Checkbox("marker", "World marker",
 		"A marker in the world on the quest the game navigates to, with its next objective and the distance.")
 	Checkbox("auto", "Navigate to the nearest quest",
@@ -54,6 +54,13 @@ local function CreateSettings()
 		"The compass fades out while you fly a flight path, and comes back when you land.")
 	Slider("compassWidth", "Compass width", "Width of the compass bar.", 300, 1200, 20)
 	Slider("compassScale", "Compass size", "Size of the whole compass: bar, pins and text.", 50, 150, 5, "%")
+
+	local unlock = Settings.RegisterProxySetting(category, "QuestBeacon_unlock", "boolean", "Unlock the compass", false,
+		ns.CompassUnlocked, ns.SetCompassUnlocked)
+	Settings.CreateCheckbox(category, unlock,
+		"Drag the compass anywhere on the screen. In the lower half, distances and tooltips go above it.")
+	layout:AddInitializer(CreateSettingsButtonInitializer("Compass position", "Reset", ns.ResetCompassPosition,
+		"Put the compass back at the top of the screen.", true))
 	Slider("merge", "Group quests closer than",
 		"Quests closer than this on the compass share one pin, with a count.", 10, 60, 2)
 

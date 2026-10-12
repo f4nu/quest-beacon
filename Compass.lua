@@ -1,5 +1,5 @@
--- A compass bar at the top of the screen: cardinal points, and a pin for each
--- tracked quest at its bearing. Quests behind you sit at the nearer edge.
+-- A compass bar, at the top of the screen unless moved: cardinal points, and a
+-- pin for each tracked quest at its bearing. Quests behind you sit at the nearer edge.
 -- It follows the way your character faces, not the camera: while the camera
 -- swings on its own (left button held), it fades.
 
@@ -57,6 +57,23 @@ centre:SetColorTexture(1, 0.82, 0, 0.9)
 centre:SetSize(2, HEIGHT)
 centre:SetPoint("CENTER")
 
+-- Shown while unlocked: drag me.
+local unlocked = CreateFrame("Frame", nil, bar)
+unlocked:SetAllPoints()
+unlocked:SetFrameLevel(bar:GetFrameLevel() + 10)
+unlocked:Hide()
+local fill = unlocked:CreateTexture(nil, "BACKGROUND")
+fill:SetAllPoints()
+fill:SetColorTexture(0.25, 0.55, 1, 0.35)
+local hint = unlocked:CreateFontString(nil, "OVERLAY")
+hint:SetFont(STANDARD_TEXT_FONT, 11, "OUTLINE")
+hint:SetText("Drag to move. Lock it in /qb, or with /qb move.")
+-- Over the distances it would sit on: a dark plate behind it.
+local plate = unlocked:CreateTexture(nil, "BORDER")
+plate:SetColorTexture(0, 0, 0, 0.8)
+plate:SetPoint("TOPLEFT", hint, "TOPLEFT", -6, 3)
+plate:SetPoint("BOTTOMRIGHT", hint, "BOTTOMRIGHT", 6, -3)
+
 local cardinals = {}
 for _, spec in ipairs(CARDINALS) do
 	local label = bar:CreateFontString(nil, "ARTWORK")
@@ -92,6 +109,16 @@ end
 local function Low()
 	local _, y = bar:GetCenter()
 	return y and y * bar:GetScale() < UIParent:GetHeight() / 2
+end
+
+-- The drag hint, on the side away from the screen's edge.
+local function PlaceHint()
+	hint:ClearAllPoints()
+	if Low() then
+		hint:SetPoint("BOTTOM", unlocked, "TOP", 0, 6)
+	else
+		hint:SetPoint("TOP", unlocked, "BOTTOM", 0, -6)
+	end
 end
 
 -- One tooltip per quest, nearest first, stacked away from the bar.
@@ -176,6 +203,7 @@ end
 
 local entries, groups = {}, {}
 local alpha = 1
+local moving = false
 
 -- Left button held over the world: the camera turns, your character does not.
 -- (With the right button, or both, the character turns too.) IsMouselooking()
@@ -195,13 +223,15 @@ local function Draw(dt)
 	local facing = GetPlayerFacing()
 	local north, west, instance = ns.PlayerPosition()
 	if not facing or not north then
-		alpha = 0
-		bar:SetAlpha(0)
+		alpha = moving and 1 or 0
+		bar:SetAlpha(alpha)
 		return
 	end
 	-- Ease towards the wanted alpha rather than blink.
 	local want = 1
-	if ns.Settings().taxiFade and UnitOnTaxi("player") then
+	if moving then
+		want = 1
+	elseif ns.Settings().taxiFade and UnitOnTaxi("player") then
 		want = 0   -- on a flight path: nothing to steer
 	elseif CameraSwinging() then
 		want = CAMERA_ALPHA
@@ -260,6 +290,7 @@ local function Draw(dt)
 		ns.SetQuestIcon(pin.icon, nearest.complete, nearest.kind, size, 1.4, nearest.hard)
 		pin:SetFrameLevel(bar:GetFrameLevel() + (current and 3 or 2))
 		pin:SetAlpha(within and 1 or 0.45)
+		pin:EnableMouse(not moving)   -- unlocked, a drag on a pin moves the bar
 		pin.badge:SetShown(many)
 		pin.count:SetShown(many)
 		pin.count:SetText(#members)
@@ -332,11 +363,10 @@ end
 local function Apply()
 	Place()
 	Resize(ns.Settings().compassWidth)
-	bar:SetShown(ns.Settings().compass)
+	bar:SetShown(ns.Settings().compass or moving)
 end
 
--- Drag mode: /qb move to unlock, again to lock.
-local moving = false
+-- Drag mode: /qb move or the settings to unlock, again to lock.
 bar:SetScript("OnDragStart", bar.StartMoving)
 bar:SetScript("OnDragStop", function(self)
 	self:StopMovingOrSizing()
@@ -344,17 +374,35 @@ bar:SetScript("OnDragStop", function(self)
 	local scale = self:GetScale()
 	QuestBeaconDB.compassPoint = { "CENTER", "BOTTOMLEFT", x * scale, y * scale }
 	Place()
+	PlaceHint()
 end)
 
-function ns.ToggleMove()
-	moving = not moving
+function ns.ResetCompassPosition()
+	QuestBeaconDB.compassPoint = nil
+	Place()
+	PlaceHint()
+end
+
+function ns.CompassUnlocked()
+	return moving
+end
+
+function ns.SetCompassUnlocked(value)
+	moving = value
 	bar:EnableMouse(moving)
 	if moving then
 		bar:RegisterForDrag("LeftButton")
 	else
 		bar:RegisterForDrag()
 	end
+	unlocked:SetShown(moving)
+	PlaceHint()
+	bar:SetShown(ns.Settings().compass or moving)
 	print("Quest Beacon: compass " .. (moving and "unlocked, drag it" or "locked"))
+end
+
+function ns.ToggleMove()
+	ns.SetCompassUnlocked(not moving)
 end
 
 ns.AddDisplay(Apply)
