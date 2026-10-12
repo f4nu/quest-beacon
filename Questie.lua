@@ -228,12 +228,13 @@ local function Player()
 			p.completed[id] = true
 		end
 	end
-	for i = 1, C_QuestLog.GetNumQuestLogEntries() do
-		local info = C_QuestLog.GetInfo(i)
-		if info and not info.isHeader and info.questID then
-			p.log[info.questID] = true
-		end
-	end
+	-- In the log: asked per quest. Walking the log misses the quests under a
+	-- collapsed header.
+	setmetatable(p.log, { __index = function(log, id)
+		local inLog = C_QuestLog.GetLogIndexForQuestID(id) ~= nil
+		rawset(log, id, inLog)
+		return inLog
+	end })
 	if GetProfessions then
 		for _, index in pairs({ GetProfessions() }) do
 			local _, _, rank, _, _, _, skillLine = GetProfessionInfo(index)
