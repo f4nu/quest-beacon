@@ -116,16 +116,16 @@ updater:SetScript("OnUpdate", function(_, dt)
 		anchoredTo = nav
 	end
 
-	local questTitle, complete, objective, kind
+	local questTitle, complete, objective, kind, tier
 	if target then
-		questTitle, complete, objective, kind = target.title, target.complete, target.detail, target.kind
+		questTitle, complete, objective, kind, tier = target.title, target.complete, target.detail, target.kind, target.tier
 	else
 		questTitle, complete, objective = ns.Describe(questID)
-		kind = ns.Kind(questID)
+		kind, tier = ns.Kind(questID), ns.Tier(questID)
 	end
 
 	local clamped = C_Navigation.WasClampedToScreen()
-	ns.SetQuestIcon(icon, complete, kind, 28, 2)
+	ns.SetQuestIcon(icon, complete, kind, 28, 2, tier)
 	title:SetText(questTitle)
 	detail:SetText(objective or "")
 	title:SetShown(not clamped)

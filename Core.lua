@@ -19,6 +19,7 @@ local DEFAULTS = {
 	compassWidth = 560,
 	compassScale = 100,   -- percent
 	compassOpacity = 100,   -- percent
+	questColors = true,
 	merge = 26,
 }
 ns.DEFAULTS = DEFAULTS
@@ -111,30 +112,38 @@ function ns.Kind(questID)
 	return tag and KINDS[tag.tagID]
 end
 
--- Hard: the quests the game's tracker shows in orange or red, by the same
--- call. Returns the tier's name in QuestDifficultyColors, else nil.
-local HARD = {}
-if Enum.RelativeContentDifficulty then
-	HARD[Enum.RelativeContentDifficulty.Difficult] = "verydifficult"
-	HARD[Enum.RelativeContentDifficulty.Impossible] = "impossible"
+-- A quest's colour, as the game's tracker colours it and by the same call:
+-- its tier's name in QuestDifficultyColors (grey, green, yellow, orange, red).
+local TIERS = {}
+for name, tier in pairs({ Trivial = "trivial", Easy = "standard", Fair = "difficult",
+	Difficult = "verydifficult", Impossible = "impossible" }) do
+	local value = Enum.RelativeContentDifficulty and Enum.RelativeContentDifficulty[name]
+	if value then
+		TIERS[value] = tier
+	end
 end
 
-function ns.Hard(questID)
-	return HARD[C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID)]
+function ns.Tier(questID)
+	return TIERS[C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID)]
+end
+
+-- A tier's colour, or nil while quest colours are off.
+local function TierColor(tier)
+	return tier and ns.Settings().questColors and QuestDifficultyColors[tier]
 end
 
 -- A quest's icon: ready for turn-in, the map-pin "?"; a dungeon or raid quest
 -- still to do, its entrance icon in colour; any other quest still to do, the
--- "?" in grey, or in the tracker's orange or red when hard and the caller asks.
+-- "?" in its tier's colour when the caller gives one and colours are on, else grey.
 -- The old gossip icon if a client lacks the art. The entrance art is mostly
 -- glow, so it is drawn larger than the "?", by entranceScale.
 local ATLAS = { dungeon = "Dungeon", raid = "Raid" }
 
-function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, hard)
+function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, tier)
 	kind = not complete and kind or nil
-	hard = not complete and not kind and hard or nil
-	if texture.questComplete ~= complete or texture.questKind ~= kind or texture.questHard ~= hard then
-		texture.questComplete, texture.questKind, texture.questHard = complete, kind, hard
+	local tint = not complete and not kind and TierColor(tier) or nil
+	if texture.questComplete ~= complete or texture.questKind ~= kind or texture.questTint ~= tint then
+		texture.questComplete, texture.questKind, texture.questTint = complete, kind, tint
 		texture.entrance = kind ~= nil and texture:SetAtlas(ATLAS[kind])
 		if texture.entrance then
 			texture:SetDesaturated(false)
@@ -145,7 +154,6 @@ function ns.SetQuestIcon(texture, complete, kind, size, entranceScale, hard)
 			texture:SetDesaturated(not complete)
 		end
 		-- The grey "?" tinted takes the tint's colour cleanly.
-		local tint = hard and QuestDifficultyColors[hard]
 		if tint then
 			texture:SetVertexColor(tint.r, tint.g, tint.b)
 		else
@@ -284,7 +292,7 @@ function ns.Refresh()
 			local target = { questID = questID }
 			target.title, target.complete, target.detail = ns.Describe(questID)
 			target.kind = ns.Kind(questID)
-			target.hard = ns.Hard(questID)
+			target.tier = ns.Tier(questID)
 			if useQuestie then
 				SpawnLocation(target, north, west, here)
 			end

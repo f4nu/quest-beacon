@@ -48,6 +48,8 @@ local function CreateSettings()
 	Checkbox("questie", "Use QuestieDB locations",
 		"Point at the nearest spawn of what a quest still needs, or of whoever takes it in, instead of the game's quest area. "
 		.. (ns.Questie.Available() and "QuestieDB is installed." or "Needs the QuestieDB addon, which is not installed."))
+	Checkbox("questColors", "Quest colours",
+		"Quest pins in the colour of the quest's level against yours, as the quest log shows it: grey, green, yellow, orange, red.")
 	Checkbox("cameraFade", "Fade the compass while turning the camera",
 		"The compass follows your character. While you swing the camera with the left mouse button it no longer matches the view, so it fades.")
 	Checkbox("taxiFade", "Hide the compass on flight paths",
