@@ -67,7 +67,7 @@ fill:SetAllPoints()
 fill:SetColorTexture(0.25, 0.55, 1, 0.35)
 local hint = unlocked:CreateFontString(nil, "OVERLAY")
 hint:SetFont(STANDARD_TEXT_FONT, 11, "OUTLINE")
-hint:SetText("Drag to move. Lock it in /qb, or with /qb move.")
+hint:SetText("Drag to move, right-click to centre. Lock it in /qb, or with /qb move.")
 -- Over the distances it would sit on: a dark plate behind it.
 local plate = unlocked:CreateTexture(nil, "BORDER")
 plate:SetColorTexture(0, 0, 0, 0.8)
@@ -375,6 +375,16 @@ bar:SetScript("OnDragStop", function(self)
 	QuestBeaconDB.compassPoint = { "CENTER", "BOTTOMLEFT", x * scale, y * scale }
 	Place()
 	PlaceHint()
+end)
+
+-- A right-click while unlocked centres the bar left to right, at its height.
+bar:SetScript("OnMouseUp", function(self, button)
+	if button == "RightButton" then
+		local _, centreY = self:GetCenter()
+		QuestBeaconDB.compassPoint = { "CENTER", "BOTTOMLEFT", UIParent:GetWidth() / 2, centreY * self:GetScale() }
+		Place()
+		PlaceHint()
+	end
 end)
 
 function ns.ResetCompassPosition()
