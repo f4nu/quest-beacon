@@ -11,3 +11,8 @@ ignore:
   - curseforge
   - screenshots
   - README.md
+  - CLAUDE.md
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
