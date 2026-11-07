@@ -1,3 +1,4 @@
-# 1.1.1
+# 1.1.2
 
-- Checked on WoW Forever 1.60.1.70790.
+- Exploration quests: the marker moves on to the next place to reach instead of staying on one already visited.
+- New icon.
