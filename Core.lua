@@ -315,18 +315,19 @@ local function SpawnPoints(questID, complete)
 	local key = Progress(questID, complete)
 	local cached = spawnCache[questID]
 	if cached and cached.key == key then
-		return cached.points
+		return cached.points, cached.explore
 	end
 	local points = {}
-	for _, point in ipairs(ns.Questie.Points(questID, complete) or {}) do
+	local found, explore = ns.Questie.Points(questID, complete)
+	for _, point in ipairs(found or {}) do
 		local north, west, instance = ToWorld(point[1], point[2], point[3])
 		if north then
 			points[#points + 1] = { north = north, west = west, instance = instance,
 				mapID = point[1], x = point[2], y = point[3] }
 		end
 	end
-	spawnCache[questID] = { key = key, points = points }
-	return points
+	spawnCache[questID] = { key = key, points = points, explore = explore }
+	return points, explore
 end
 
 -- The game's location for a quest: its area on a map, or its next waypoint.
@@ -366,7 +367,8 @@ end
 -- The nearest QuestieDB spawn in this instance. Spawns elsewhere still give
 -- the quest a place (another instance) when the game has none.
 local function SpawnLocation(target, north, west, here)
-	local points = SpawnPoints(target.questID, target.complete)
+	local points, explore = SpawnPoints(target.questID, target.complete)
+	target.explore = explore
 	local best, bestYards
 	if north then
 		for _, point in ipairs(points) do
@@ -417,7 +419,9 @@ function ns.Refresh()
 			if useQuestie then
 				SpawnLocation(target, north, west, here)
 			end
-			if not target.spawn or target.instance ~= here then
+			-- Places to reach: QuestieDB keeps the ones already reached, the
+			-- game's quest area moves on to the next, so the game's goes first.
+			if not target.spawn or target.instance ~= here or target.explore then
 				local spawn = target.spawn and { target.north, target.west, target.instance, target.source }
 				target.north, target.west, target.instance, target.spawn = nil, nil, nil, nil
 				GameLocation(target, onMap, here)

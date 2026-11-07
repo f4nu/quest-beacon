@@ -120,12 +120,13 @@ local function Wanted(name, objectives)
 	return not seen
 end
 
--- Points {mapID, x, y} where the quest can be advanced (or turned in), or nil.
+-- Points {mapID, x, y} where the quest can be advanced (or turned in), or nil;
+-- and whether they are only places to reach.
 function Q.Points(questID, complete)
 	if not Load() then
 		return nil
 	end
-	local points = {}
+	local points, explore = {}, false
 	if complete then
 		local finishers = Get(db.Quest, questID, "finishedBy")
 		if type(finishers) == "table" then
@@ -164,13 +165,17 @@ function Q.Points(questID, complete)
 				end
 			end
 		end
-		-- Places to reach: { text, spawns }.
+		-- Places to reach: { text, spawns }. One list for all of them, with
+		-- nothing to tell which objective each is: a place already reached
+		-- stays in it.
 		local trigger = Get(db.Quest, questID, "triggerEnd")
 		if type(trigger) == "table" then
+			local before = #points
 			AddSpawns(points, trigger[2])
+			explore = before == 0 and #points > 0
 		end
 	end
-	return #points > 0 and points or nil
+	return #points > 0 and points or nil, explore
 end
 
 -- A quest giver's name, spawn points {mapID, x, y}, and the factions it is
