@@ -17,7 +17,7 @@ No more opening the map to see where to go next.
 - **What's nearby**: flight masters, and quest givers with a quest you can take (with QuestieDB), show on the compass when they're close, each kind within its own range. A new one pulses as it comes into range, even behind you. Undiscovered flight masters stand out, known ones are greyed.
 - **Your own pins**: the map pin you place (Ctrl+click on the map) is on the compass and never replaced; navigation goes there until you reach or remove it. Notes you add with HandyNotes show too.
 - **Stays out of the way**: fades while you swing the camera, hides on flight paths, sits under the rest of the UI.
-- **Your layout**: move it anywhere, top or bottom, and set its size, width and opacity. Distances and tooltips flip above the bar at the bottom of the screen.
+- **Your layout**: move it anywhere, top or bottom, and set its size, width, opacity and background. Distances and tooltips flip above the bar at the bottom of the screen.
 
 ![World marker](https://raw.githubusercontent.com/f4nu/quest-beacon/main/screenshots/compass_2.jpg)
 

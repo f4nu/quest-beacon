@@ -1,4 +1,3 @@
-# 1.1.2
+# 1.1.3
 
-- Exploration quests: the marker moves on to the next place to reach instead of staying on one already visited.
-- New icon.
+- Background opacity setting: how dark the band behind the compass is, from 0 to 100%.

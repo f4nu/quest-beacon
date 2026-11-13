@@ -19,6 +19,7 @@ local DEFAULTS = {
 	compassWidth = 560,
 	compassScale = 100,   -- percent
 	compassOpacity = 100,   -- percent
+	backgroundOpacity = 50,   -- percent: the compass band's darkness in the middle
 	questColors = true,
 	givers = true,
 	giverRange = 200,   -- yards

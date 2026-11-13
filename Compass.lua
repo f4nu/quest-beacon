@@ -36,15 +36,22 @@ bar:SetClampedToScreen(true)
 bar:SetMovable(true)
 bar:Hide()
 
--- Dark band fading out at both ends.
+-- Dark band fading out at both ends; how dark in the middle is a setting.
 local bands = {}
-for _, spec in ipairs({ { "LEFT", 0, 0.5 }, { "CENTER", 0.5, 0.5 }, { "RIGHT", 0.5, 0 } }) do
+for _, spec in ipairs({ { "LEFT", 0, 1 }, { "CENTER", 1, 1 }, { "RIGHT", 1, 0 } }) do
 	local band = bar:CreateTexture(nil, "BACKGROUND")
 	band:SetPoint(spec[1], bar, spec[1], 0, 0)
 	band:SetColorTexture(1, 1, 1, 1)
-	band:SetGradient("HORIZONTAL", CreateColor(0, 0, 0, spec[2]), CreateColor(0, 0, 0, spec[3]))
+	band.from, band.to = spec[2], spec[3]
 	bands[#bands + 1] = band
 end
+
+local function Shade(darkness)
+	for _, band in ipairs(bands) do
+		band:SetGradient("HORIZONTAL", CreateColor(0, 0, 0, band.from * darkness), CreateColor(0, 0, 0, band.to * darkness))
+	end
+end
+Shade(ns.DEFAULTS.backgroundOpacity / 100)
 
 local function Resize(width)
 	WIDTH = width
@@ -527,6 +534,7 @@ end
 local function Apply()
 	Place()
 	Resize(ns.Settings().compassWidth)
+	Shade(ns.Settings().backgroundOpacity / 100)
 	bar:SetShown(ns.Settings().compass or moving)
 end
 
